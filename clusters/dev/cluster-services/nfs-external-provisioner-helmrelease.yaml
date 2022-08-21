@@ -1,0 +1,22 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: nfs-external-provisioner
+  namespace: nfs-external-provisioner
+spec:
+  chart:
+    spec:
+      chart: nfs-subdir-external-provisioner
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: nfs-external-provisioner
+  interval: 1h
+  releaseName: nfs-external-provisioner
+  values:
+    nfs:
+      server: 192.168.86.36
+      path: /volume1/k8s-home-lab
+      mountOptions:
+        - nfsvers=3

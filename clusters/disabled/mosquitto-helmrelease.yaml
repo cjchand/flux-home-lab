@@ -1,0 +1,43 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: teslamate-mosquitto
+  namespace: teslamate
+  annotations:
+    fluxcd.io/ignore: "true"
+spec:
+  chart:
+    spec:
+      chart: mosquitto
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: k8s-at-home
+  interval: 1h
+  releaseName: teslamate-mosquitto
+  values:
+    image:
+      repository: eclipse-mosquitto
+      tag: 2.0.11
+      pullPolicy: IfNotPresent
+    service:
+      main:
+        ports:
+          http:
+            enabled: false
+          mqtt:
+            enabled: true
+            port: 1883
+    auth:
+      enabled: false
+    perListenerSettings: false
+    persistence:
+      data:
+        enabled: false
+        mountPath: /mosquitto/data
+      configinc:
+        enabled: false
+        mountPath: /mosquitto/configinc
+        accessMode: ReadWriteOnce
+        size: 100Mi

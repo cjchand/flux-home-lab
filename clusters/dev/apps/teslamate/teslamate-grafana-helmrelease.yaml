@@ -1,0 +1,44 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: teslamate-grafana
+  namespace: teslamate
+spec:
+  chart:
+    spec:
+      chart: grafana
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: grafana
+  interval: 1h
+  releaseName: teslamate-grafana
+  values:
+    image:
+      repository: teslamate/grafana
+      tag: edge
+      pullPolicy: IfNotPresent
+    nodeSelector:
+      disktype: ssd
+    persistence:
+      enabled: false
+    ingress:
+      enabled: true
+      annotations:
+        kubernetes.io/ingress.class: "public"
+      path: /
+      hosts:
+        - teslamate-grafana.local
+    env:
+      DATABASE_HOST: teslamate-postgres-nfs-postgresql
+      DATABASE_PORT: 5432
+      DATABASE_USER: teslamate
+      DATABASE_NAME: teslamate
+      GF_PATHS_PLUGINS: /var/lib/grafana-plugins
+    envValueFrom:
+      DATABASE_PASS:
+        secretKeyRef:
+          name: teslamate-postgres
+          key: teslamate_user_pass
+
