@@ -10,4 +10,5 @@
     * Add OS-level telemetry and monitoring
     * Consider Thanos (might be overkill)
     * Consider Loki (Lens is fine for now, but would be good from a learning aspect)
-    
+* Teslamate
+    * Add PVC for Grafana (alternatively, set a default admin password as that's the main pain point)
