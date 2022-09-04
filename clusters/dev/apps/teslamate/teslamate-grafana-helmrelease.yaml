@@ -22,12 +22,14 @@ spec:
     nodeSelector:
       disktype: ssd
     persistence:
-      enabled: true
       type: pvc
+      enabled: true
       storageClassName: nfs-client
       accessModes:
         - ReadWriteOnce
-      size: 512Mi
+      size: 1Gi
+      finalizers:
+        - kubernetes.io/pvc-protection
     ingress:
       enabled: true
       annotations:
