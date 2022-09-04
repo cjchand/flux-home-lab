@@ -22,7 +22,12 @@ spec:
     nodeSelector:
       disktype: ssd
     persistence:
-      enabled: false
+      enabled: true
+      type: pvc
+      storageClassName: nfs-client
+      accessModes:
+        - ReadWriteOnce
+      size: 512Mi
     ingress:
       enabled: true
       annotations:
