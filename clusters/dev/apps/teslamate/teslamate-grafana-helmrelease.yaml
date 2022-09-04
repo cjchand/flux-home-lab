@@ -12,7 +12,7 @@ spec:
       sourceRef:
         kind: HelmRepository
         name: grafana
-  interval: 1h1m
+  interval: 1h
   releaseName: teslamate-grafana
   values:
     image:
