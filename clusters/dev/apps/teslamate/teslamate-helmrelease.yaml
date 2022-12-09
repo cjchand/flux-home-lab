@@ -59,6 +59,8 @@ spec:
           secretKeyRef:
             name: teslamate-postgres
             key: encryption_key
+      - name: WAFFLES
+        value: "true"
     persistence:
       import:
         enabled: false
