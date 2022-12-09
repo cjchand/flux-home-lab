@@ -1,0 +1,47 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: velero
+  namespace: velero
+spec:
+  chart:
+    spec:
+      chart: velero
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: velero
+  interval: 1h
+  releaseName: velero
+  values:
+    image:
+      repository: velero/velero
+      tag: v1.9.1
+      pullPolicy: IfNotPresent
+    resources:
+      requests:
+        cpu: 500m
+        memory: 128Mi
+      limits:
+        cpu: 1000m
+        memory: 512Mi
+    metrics:
+      enabled: true
+      scrapeInterval: 30s
+      scrapeTimeout: 10s
+    podAnnotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "8085"
+      prometheus.io/path: "/metrics"
+    serviceMonitor:
+      enabled: false
+      additionalLabels: {}
+    upgradeCRDs: true
+    cleanUpCRDs: false
+    configuration:
+    provider: aws
+      backupStorageLocation:
+        name:
+        provider:
+        bucket:
