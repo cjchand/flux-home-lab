@@ -16,8 +16,8 @@ spec:
   releaseName: teslamate-core
   values:
     image:
-      repository: jsightler/teslamate
-      tag: "20231029"
+      repository: teslamate/teslamate
+      tag: "1.28"
       pullPolicy: IfNotPresent
     service:
       main:

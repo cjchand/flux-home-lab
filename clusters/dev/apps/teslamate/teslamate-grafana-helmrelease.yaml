@@ -17,7 +17,7 @@ spec:
   values:
     image:
       repository: teslamate/grafana
-      tag: latest
+      tag: "1.27"
       pullPolicy: IfNotPresent
     nodeSelector:
       disktype: ssd
