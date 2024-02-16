@@ -42,7 +42,7 @@ spec:
       DATABASE_PORT: 5432
       DATABASE_USER: teslamate
       DATABASE_NAME: teslamate
-      GF_PATHS_PLUGINS: /var/lib/grafana-plugins
+      # GF_PATHS_PLUGINS: /var/lib/grafana-plugins
     envValueFrom:
       DATABASE_PASS:
         secretKeyRef:
