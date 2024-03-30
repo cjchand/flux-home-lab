@@ -39,7 +39,6 @@ spec:
       # DB_URI:  # mongodb://unifi-mongodb:27017/unifi
       # STATDB_URI:  # mongodb://unifi-mongodb:27017/unifi_stat
       # DB_NAME:  # unifi
-      WAFFLES: "true"
     # -- pod security context.
     # @default -- See below
     podSecurityContext:
