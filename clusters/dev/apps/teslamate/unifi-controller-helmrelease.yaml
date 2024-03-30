@@ -122,7 +122,7 @@ spec:
                   ## Overrides the service name reference for this path
                   name: main
                   ## Overrides the service port reference for this path
-                  port: portal-https
+                  port: 8080
     # -- Configure persistence settings for the chart under this key.
     # @default -- See values.yaml
     persistence:
