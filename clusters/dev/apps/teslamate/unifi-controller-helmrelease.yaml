@@ -127,6 +127,8 @@ spec:
     # -- Configure persistence settings for the chart under this key.
     # @default -- See values.yaml
     persistence:
+      accessModes:
+        - ReadWriteMany
       data:
         enabled: true
         mountPath: /unifi
@@ -140,6 +142,8 @@ spec:
       auth:
         enabled: false
       persistence:
+        accessModes:
+          - ReadWriteMany
         enabled: true
         storageClass: "nfs-client"
         size: 8Gi
