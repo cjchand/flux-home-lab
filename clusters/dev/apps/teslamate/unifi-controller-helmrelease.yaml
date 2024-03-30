@@ -72,7 +72,7 @@ spec:
       ## database data Persistent Volume Storage Class
       ## If defined, storageClassName: <storageClass>
       ## If set to "-", storageClassName: "", which disables dynamic provisioning
-      storageClass: local-path-retain
+      storageClass: nfs-client
       annotations: {}
       backup:
         enabled: true
@@ -81,7 +81,7 @@ spec:
         ## database data Persistent Volume Storage Class
         ## If defined, storageClassName: <storageClass>
         ## If set to "-", storageClassName: "", which disables dynamic provisioning
-        storageClass: local-path-retain
+        storageClass: nfs-client
         annotations: {}
 
 
