@@ -52,8 +52,8 @@ spec:
           # -- Configure Web interface + API port
           # @default -- See values.yaml
           http:
-            port: 8443
-            protocol: HTTPS
+            port: 8080
+            protocol: HTTP
           # -- Configure Controller port used for device command/control
           # @default -- See values.yaml
           controller:
