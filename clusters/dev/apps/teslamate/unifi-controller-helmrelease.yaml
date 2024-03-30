@@ -110,8 +110,7 @@ spec:
           nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
         ingressClassName:  # "nginx"
         hosts:
-          -  ## Host address. Helm template can be passed.
-            host: unifi-controller.local
+          - host: unifi-controller.local
             ## Configure the paths for the host
             paths:
               -  ## Path. Helm template can be passed.
