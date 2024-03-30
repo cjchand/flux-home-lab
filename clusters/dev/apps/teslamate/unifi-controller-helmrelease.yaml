@@ -19,23 +19,6 @@ spec:
       repository: jacobalberty/unifi
       tag: "v8.1.113"
       pullPolicy: IfNotPresent
-    service:
-      main:
-        ports:
-          http:
-            port: 8080
-    ingress:
-      main:
-        enabled: true
-        annotations:
-          kubernetes.io/ingress.class: "public"
-        hosts:
-          - host: unifi-controller.local
-            paths:
-              - path: /
-                pathType: Prefix
-                service:
-                  port: 8080
     env:
       # -- Set the container timezone
       TZ: UTC
@@ -56,10 +39,6 @@ spec:
       # DB_URI:  # mongodb://unifi-mongodb:27017/unifi
       # STATDB_URI:  # mongodb://unifi-mongodb:27017/unifi_stat
       # DB_NAME:  # unifi
-    persistence:
-      import:
-        enabled: true
-        mountPath: /opt/app/import
     # -- pod security context.
     # @default -- See below
     podSecurityContext:
@@ -132,7 +111,7 @@ spec:
         ingressClassName:  # "nginx"
         hosts:
           -  ## Host address. Helm template can be passed.
-            host:
+            host: unifi-controller.local
             ## Configure the paths for the host
             paths:
               -  ## Path. Helm template can be passed.
