@@ -126,10 +126,10 @@ spec:
     # -- Configure persistence settings for the chart under this key.
     # @default -- See values.yaml
     persistence:
+      accessModes:
+        - ReadWriteMany
       data:
         enabled: true
-        accessModes:
-          - ReadWriteMany
         mountPath: /unifi
 
     # -- Enable and configure mongodb database subchart under this key.
