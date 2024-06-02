@@ -1,5 +1,7 @@
 # List of TODOs
 
+* Add mDNS support
+    * Example: [External mDNS](https://github.com/blake/external-mdns)
 * Add Velero backups
     * Deploy MinIO as destination (off-cluster)
     * Alternatively, research S3 free tier
