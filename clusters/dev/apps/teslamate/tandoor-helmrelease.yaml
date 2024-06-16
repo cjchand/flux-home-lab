@@ -70,14 +70,14 @@ spec:
       config:
         enabled: true
         retain: true
-        storageClass: ""
+        storageClass: "nfs-client"
         accessMode: ReadWriteOnce
         size: 1Gi
       media:
         enabled: true
         mountPath: /opt/recipes/mediafiles
         retain: true
-        storageClass: ""
+        storageClass: "nfs-client"
         accessMode: ReadWriteOnce
         size: 1Gi
       static:
@@ -99,7 +99,7 @@ spec:
       primary:
         persistence:
           enabled: true
-          storageClass: ""
+          storageClass: "nfs-client"
           size: 8Gi
 
     podSecurityContext:
