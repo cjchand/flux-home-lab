@@ -6,5 +6,4 @@ metadata:
   namespace: tandoor
 spec:
   interval: 24h
-  url: https://charts.gabe565.com/charts
-
+  url: https://charts.gabe565.com
