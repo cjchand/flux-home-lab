@@ -17,10 +17,10 @@ spec:
   values:
     image:
       # -- image repository
-      repository: homebridge/homebridge:latest
+      repository: homebridge/homebridge
       # -- image tag
       # @default -- chart.appVersion
-      tag:
+      tag: latest
       # -- image pull policy
       pullPolicy: IfNotPresent
 
