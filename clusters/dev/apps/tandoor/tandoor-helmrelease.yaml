@@ -36,6 +36,7 @@ spec:
     env:
       # -- default timezone
       TIMEZONE: UTC
+      SOCIAL_PROVIDERS: 
       # SECRET_KEY: changeme
 
     service:
