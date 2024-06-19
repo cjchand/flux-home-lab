@@ -17,7 +17,7 @@ spec:
   values:
     image:
       # -- image repository
-      repository: ghcr.io/oznu/homebridge
+      repository: homebridge/homebridge:latest
       # -- image tag
       # @default -- chart.appVersion
       tag:
