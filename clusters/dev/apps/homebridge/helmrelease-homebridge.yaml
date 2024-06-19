@@ -66,6 +66,7 @@ spec:
       config:
         enabled: true
         mountPath: /homebridge
+        storageClass: "nfs-client"
 
     configmap:
       scripts:
