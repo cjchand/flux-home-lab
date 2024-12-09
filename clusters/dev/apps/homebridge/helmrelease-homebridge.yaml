@@ -12,7 +12,7 @@ spec:
       sourceRef:
         kind: HelmRepository
         name: k8s-at-home
-      appVersion: "2024-05-02"
+      appVersion: "2024-11-29"
 
   interval: 1h
   releaseName: homebridge
