@@ -70,4 +70,4 @@ spec:
         - -source=service
         - -publish-internal-services
         - -without-namespace=true
-        - -service-ttl=30
+        - -record-ttl=30
