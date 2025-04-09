@@ -12,7 +12,7 @@ spec:
       sourceRef:
         kind: HelmRepository
         name: k8s-at-home
-      appVersion: "2024-11-29"
+      appVersion: "2025-02-26"
 
   interval: 1h
   releaseName: homebridge
@@ -22,7 +22,7 @@ spec:
       repository: homebridge/homebridge
       # -- image tag
       # @default -- chart.appVersion
-      tag: "2024-11-29"
+      tag: "2025-02-26"
       # -- image pull policy
       pullPolicy: IfNotPresent
 
