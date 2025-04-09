@@ -63,8 +63,4 @@ spec:
         args:
         - -source=ingress
         - -source=service
-        - -txt-prefix=k8s
-        - -domain-filter=local
-        - -publish-internal-services
         - -without-namespace=true
-        - -service-ttl=30
