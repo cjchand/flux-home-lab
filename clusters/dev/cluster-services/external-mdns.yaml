@@ -60,14 +60,6 @@ spec:
           capabilities:
             drop: ["ALL"]
         image: blakec/external-mdns:latest
-        env:
-        - name: INGRESS_ADVERTISE_IP
-          value: "192.168.86.31"
-        - name: ADVERTISE_IP
-          value: "192.168.86.31"
         args:
         - -source=ingress
         - -source=service
-        - -publish-internal-services
-        - -without-namespace=true
-        - -record-ttl=30
