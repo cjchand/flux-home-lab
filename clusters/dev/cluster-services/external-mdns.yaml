@@ -64,4 +64,3 @@ spec:
         args:
         - -source=ingress
         - -source=service
-        - -provider=mdns
