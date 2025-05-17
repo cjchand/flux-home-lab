@@ -51,6 +51,7 @@ spec:
         runAsGroup: 65534
         runAsNonRoot: true
       hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       serviceAccountName: external-mdns
       containers:
       - name: external-mdns
@@ -63,3 +64,4 @@ spec:
         args:
         - -source=ingress
         - -source=service
+        - -provider=mdns
