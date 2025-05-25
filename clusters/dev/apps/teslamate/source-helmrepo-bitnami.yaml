@@ -1,10 +1,14 @@
 ---
 apiVersion: source.toolkit.fluxcd.io/v1beta2
-kind: HelmRepository
+kind: HelmChart
 metadata:
-  name: bitnami
+  name: bitnami-postgresql
   namespace: teslamate
 spec:
-  interval: 24h
-  url: oci://registry-1.docker.io/bitnamicharts
+  chart: postgresql
+  version: 16.2.1
+  sourceRef:
+    kind: OCIRepository
+    name: bitnami-oci
+    namespace: teslamate
 
