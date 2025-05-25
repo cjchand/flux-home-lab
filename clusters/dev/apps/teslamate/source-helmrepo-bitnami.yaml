@@ -8,6 +8,6 @@ spec:
   chart: postgresql
   version: 16.2.1
   sourceRef:
-    kind: OCIRepository
-    name: bitnami-oci
+    kind: HelmRepository
+    name: bitnami
 
