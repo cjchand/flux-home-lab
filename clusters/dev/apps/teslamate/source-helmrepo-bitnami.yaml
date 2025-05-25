@@ -1,13 +1,8 @@
----
 apiVersion: source.toolkit.fluxcd.io/v1beta2
-kind: HelmChart
+kind: HelmRepository
 metadata:
-  name: bitnami-postgresql
+  name: bitnami
   namespace: teslamate
 spec:
-  interval: 24h
-  chart: postgresql
-  version: 16.2.1
-  sourceRef:
-    kind: HelmRepository
-    name: bitnami
+  interval: 1h
+  url: https://charts.bitnami.com/bitnami
