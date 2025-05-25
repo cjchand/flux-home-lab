@@ -10,5 +10,4 @@ spec:
   sourceRef:
     kind: OCIRepository
     name: bitnami-oci
-    namespace: teslamate
 
