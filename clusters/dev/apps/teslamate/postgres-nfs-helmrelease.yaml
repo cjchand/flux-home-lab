@@ -12,6 +12,7 @@ spec:
         name: bitnami
         namespace: teslamate
       chart: postgresql
+      interval: 1h
       version: 16.2.1
   releaseName: teslamate-postgres-nfs
   values:
