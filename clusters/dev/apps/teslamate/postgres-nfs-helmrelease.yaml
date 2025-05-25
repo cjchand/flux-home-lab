@@ -7,12 +7,12 @@ metadata:
 spec:
   chart:
     spec:
-      chart: postgresql
-      reconcileStrategy: ChartVersion
       sourceRef:
         kind: HelmRepository
         name: bitnami
-  interval: 1h
+        namespace: teslamate
+      chart: postgresql
+      version: 16.2.1
   releaseName: teslamate-postgres-nfs
   values:
     architecture: standalone
