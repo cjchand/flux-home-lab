@@ -6,6 +6,7 @@ metadata:
   namespace: teslamate
 spec:
   interval: 24h
+  url: https://charts.bitnami.com/bitnami
   chart: postgresql
   version: 16.2.1
   sourceRef:
