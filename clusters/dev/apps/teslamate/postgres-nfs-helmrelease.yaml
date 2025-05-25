@@ -5,9 +5,9 @@ metadata:
   name: teslamate-postgres-nfs
   namespace: teslamate
 spec:
+  interval: 1h
   chart:
     spec:
-      interval: 1h
       sourceRef:
         kind: HelmRepository
         name: bitnami
