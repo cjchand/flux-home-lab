@@ -7,7 +7,7 @@ spec:
   interval: 60s
   module: icmp
   prober:
-    url: prometheus-blackbox-exporter.monitoring.svc.cluster.local:9115
+    url: blackbox-exporter.monitoring.svc.cluster.local:9115
   targets:
     staticConfig:
       static:
