@@ -1,0 +1,41 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: blackbox-endpoints
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  endpoints:
+    - port: http
+      interval: 60s
+      path: /probe
+      params:
+        module: [icmp]
+      scheme: http
+      metricRelabelings:
+        - sourceLabels: [__address__]
+          targetLabel: instance
+  namespaceSelector:
+    matchNames:
+      - monitoring
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: prometheus-blackbox-exporter
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: blackbox-probe
+  namespace: monitoring
+spec:
+  interval: 60s
+  module: icmp
+  prober:
+    url: prometheus-blackbox-exporter.monitoring.svc.cluster.local:9115
+  targets:
+    staticConfig:
+      static:
+        - 192.168.86.1 # Google WiFi
+        - 192.168.1.254 # AT&T Router
+        - 8.8.8.8 # Google DNS (highly available)

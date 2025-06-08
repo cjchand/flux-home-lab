@@ -1,0 +1,25 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: blackbox-network-alerts
+  namespace: monitoring
+spec:
+  groups:
+    - name: network-probe.rules
+      rules:
+        - alert: NetworkEndpointDown
+          expr: probe_success == 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Network endpoint down"
+            description: "The endpoint {{ $labels.instance }} is unreachable."
+        - alert: NetworkHighPacketLoss
+          expr: probe_icmp_loss_percent > 20
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High packet loss detected"
+            description: "The endpoint {{ $labels.instance }} is experiencing >20% packet loss."
