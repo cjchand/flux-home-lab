@@ -1,0 +1,20 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: slack-config
+  namespace: monitoring
+spec:
+  receivers:
+    - name: slack-notifications
+      slackConfigs:
+        - apiURL:
+            name: alertmanager-slack-webhook
+            key: slack_webhook_url
+          channel: "#homelab-alerts"
+          sendResolved: true
+  route:
+    receiver: slack-notifications
+    groupBy: [alertname, instance]
+    groupWait: 30s
+    groupInterval: 5m
+    repeatInterval: 1h
