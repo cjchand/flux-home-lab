@@ -7,3 +7,4 @@ resources:
   - source-helmrepo-nfs-external-provisioner.yaml
   - source-helmrepo-sealed-secrets.yaml
   - alertmanager-slack-sealed-secret.yaml
+  - blackbox-network-probe.yaml
