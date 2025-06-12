@@ -21,10 +21,6 @@ spec:
       storageClass: "nfs-client"
       accessMode: ReadWriteMany
       size: 8Gi
-      annotations:
-        nfs.io/createUID: "1001"
-        nfs.io/createGID: "1001"
-        nfs.io/createMode: "0755"
     service:
       type: ClusterIP
       port: 3001
