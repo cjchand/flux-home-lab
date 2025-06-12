@@ -16,6 +16,7 @@ spec:
         namespace: monitoring
   releaseName: uptime-kuma
   values:
+    useDeploy: false
     volume:
       enabled: true
       storageClass: nfs-client
