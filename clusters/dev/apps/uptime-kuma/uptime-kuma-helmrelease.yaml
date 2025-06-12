@@ -5,7 +5,7 @@ metadata:
   name: uptime-kuma
   namespace: monitoring
 spec:
-  interval: 1h
+  interval: 2h
   chart:
     spec:
       chart: uptime-kuma
@@ -32,4 +32,3 @@ spec:
       limits:
         cpu: 500m
         memory: 512Mi
-
