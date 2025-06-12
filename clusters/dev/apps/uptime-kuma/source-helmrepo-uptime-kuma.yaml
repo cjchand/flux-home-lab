@@ -2,7 +2,7 @@
 apiVersion: source.toolkit.fluxcd.io/v1beta2
 kind: HelmRepository
 metadata:
-  name: dieweil-uptime-kuma
+  name: dirsigler-uptime-kuma
   namespace: monitoring
 spec:
   interval: 24h
