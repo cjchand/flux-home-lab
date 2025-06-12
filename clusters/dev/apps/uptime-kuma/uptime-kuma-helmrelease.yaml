@@ -17,6 +17,13 @@ spec:
   releaseName: uptime-kuma
   values:
     useDeploy: false
+    ingress:
+      enabled: true
+      hosts:
+        - host: monitoring.local
+          paths:
+            - path: /
+              pathType: ImplementationSpecific
     volume:
       enabled: true
       storageClassName: nfs-client
