@@ -19,8 +19,7 @@ spec:
     volume:
       enabled: true
       storageClass: "nfs-client"
-      accessMode:
-        - ReadWriteMany
+      accessMode: ReadWriteMany
       size: 8Gi
       annotations:
         nfs.io/createUID: "1001"
