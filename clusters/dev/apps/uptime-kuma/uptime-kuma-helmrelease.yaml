@@ -19,7 +19,7 @@ spec:
     useDeploy: false
     volume:
       enabled: true
-      storageClass: nfs-client
+      storageClassName: nfs-client
       accessMode: ReadWriteMany
       size: 8Gi
     service:
