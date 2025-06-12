@@ -18,7 +18,7 @@ spec:
   values:
     volume:
       enabled: true
-      storageClass: "nfs-client"
+      storageClass: nfs-client
       accessMode: ReadWriteMany
       size: 8Gi
     service:
