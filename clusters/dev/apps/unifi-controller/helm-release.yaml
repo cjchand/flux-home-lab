@@ -1,0 +1,65 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: unifi-controller
+  namespace: unifi
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: unifi-controller
+      version: "12.0.0"
+      sourceRef:
+        kind: HelmRepository
+        name: k8s-at-home
+        namespace: flux-system
+  values:
+    image:
+      repository: lscr.io/linuxserver/unifi-controller
+      tag: latest
+      pullPolicy: IfNotPresent
+
+    persistence:
+      config:
+        enabled: true
+        size: 10Gi
+
+    env:
+      TZ: "America/Chicago"
+      PUID: "568"
+      PGID: "568"
+
+    service:
+      main:
+        ports:
+          http:
+            enabled: true
+            port: 8080
+          https:
+            enabled: true
+            port: 8443
+          portal:
+            enabled: true
+            port: 8880
+          portal-ssl:
+            enabled: true
+            port: 8843
+
+    ingress:
+      main:
+        enabled: true
+        annotations:
+          kubernetes.io/ingress.class: nginx
+          cert-manager.io/cluster-issuer: letsencrypt-prod
+        hosts:
+          - host: unifi.local
+            paths:
+              - path: /
+                pathType: Prefix
+        tls:
+          - secretName: unifi-tls
+            hosts:
+              - unifi.local
+
+    hostNetwork: true
+    dnsPolicy: ClusterFirstWithHostNet 
