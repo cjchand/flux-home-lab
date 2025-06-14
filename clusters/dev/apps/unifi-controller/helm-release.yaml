@@ -7,22 +7,22 @@ spec:
   interval: 5m
   chart:
     spec:
-      chart: unifi-controller
-      version: "12.0.0"
+      chart: unifi
+      version: "5.1.2"
       sourceRef:
         kind: HelmRepository
-        name: k8s-at-home
+        name: geek-cookbook
         namespace: flux-system
   values:
     image:
-      repository: lscr.io/linuxserver/unifi-controller
+      repository: linuxserver/unifi-controller
       tag: latest
       pullPolicy: IfNotPresent
-
     persistence:
-      config:
+      data:
         enabled: true
         size: 10Gi
+    
 
     env:
       TZ: "America/Chicago"
