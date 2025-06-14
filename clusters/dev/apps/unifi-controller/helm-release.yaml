@@ -34,22 +34,33 @@ spec:
     service:
       main:
         ports:
-          web:
+          controller:
             enabled: true
             port: 8080
-            targetPort: 8080
-          web-ssl:
+          http:
             enabled: true
             port: 8443
-            targetPort: 8443
           portal:
             enabled: true
             port: 8880
-            targetPort: 8880
           portal-ssl:
             enabled: true
             port: 8843
-            targetPort: 8843
+          discovery:
+            enabled: true
+            port: 10001
+            protocol: UDP
+          stun:
+            enabled: true
+            port: 3478
+            protocol: UDP
+          speedtest:
+            enabled: true
+            port: 6789
+          syslog:
+            enabled: true
+            port: 5514
+            protocol: UDP
 
     ingress:
       main:
