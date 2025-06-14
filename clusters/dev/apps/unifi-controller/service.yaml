@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: unifi-controller
+  namespace: unifi
+spec:
+  type: ClusterIP
+  ports:
+  - name: web
+    port: 8080
+    targetPort: 8080
+  - name: web-ssl
+    port: 8443
+    targetPort: 8443
+  - name: portal
+    port: 8880
+    targetPort: 8880
+  - name: portal-ssl
+    port: 8843
+    targetPort: 8843
+  selector:
+    app: unifi-controller 

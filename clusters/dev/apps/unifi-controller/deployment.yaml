@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unifi-controller
+  namespace: unifi
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: unifi-controller
+  template:
+    metadata:
+      labels:
+        app: unifi-controller
+    spec:
+      hostNetwork: true
+      containers:
+      - name: unifi-controller
+        image: lscr.io/linuxserver/unifi-controller:latest
+        env:
+        - name: PUID
+          value: "568"
+        - name: PGID
+          value: "568"
+        - name: TZ
+          value: "America/Chicago"
+        ports:
+        - containerPort: 8080  # Web UI
+        - containerPort: 8443  # HTTPS Web UI
+        - containerPort: 8880  # HTTP Portal
+        - containerPort: 8843  # HTTPS Portal
+        - containerPort: 6789  # Speed Test
+        - containerPort: 3478  # STUN
+        - containerPort: 10001 # Discovery
+        - containerPort: 1900  # Discovery
+        - containerPort: 5656  # Discovery
+        - containerPort: 8081  # Device Communication
+        - containerPort: 8082  # Device Communication
+        - containerPort: 8083  # Device Communication
+        - containerPort: 8084  # Device Communication
+        - containerPort: 8085  # Device Communication
+        - containerPort: 8086  # Device Communication
+        - containerPort: 8087  # Device Communication
+        - containerPort: 8088  # Device Communication
+        - containerPort: 8089  # Device Communication
+        - containerPort: 8090  # Device Communication
+        - containerPort: 8091  # Device Communication
+        - containerPort: 8092  # Device Communication
+        - containerPort: 8093  # Device Communication
+        - containerPort: 8094  # Device Communication
+        - containerPort: 8095  # Device Communication
+        - containerPort: 8096  # Device Communication
+        - containerPort: 8097  # Device Communication
+        - containerPort: 8098  # Device Communication
+        - containerPort: 8099  # Device Communication
+        volumeMounts:
+        - name: config
+          mountPath: /config
+      volumes:
+      - name: config
+        persistentVolumeClaim:
+          claimName: unifi-controller-config 
