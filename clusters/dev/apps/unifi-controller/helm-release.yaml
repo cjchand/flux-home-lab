@@ -63,5 +63,5 @@ spec:
             hosts:
               - unifi.local
 
-    hostNetwork: true
+    # hostNetwork: true
     dnsPolicy: ClusterFirstWithHostNet 
