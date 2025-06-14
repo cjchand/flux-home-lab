@@ -23,6 +23,7 @@ spec:
         enabled: true
         accessMode: ReadWriteMany
         size: 10Gi
+        storageClass: "nfs-client"
     
 
     env:
