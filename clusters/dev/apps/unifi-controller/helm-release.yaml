@@ -34,18 +34,22 @@ spec:
     service:
       main:
         ports:
-          http:
+          web:
             enabled: true
             port: 8080
-          https:
+            targetPort: 8080
+          web-ssl:
             enabled: true
             port: 8443
+            targetPort: 8443
           portal:
             enabled: true
             port: 8880
+            targetPort: 8880
           portal-ssl:
             enabled: true
             port: 8843
+            targetPort: 8843
 
     ingress:
       main:
@@ -63,5 +67,5 @@ spec:
             hosts:
               - unifi.local
 
-    # hostNetwork: true
+    hostNetwork: true
     dnsPolicy: ClusterFirstWithHostNet 
