@@ -33,7 +33,23 @@ spec:
 
     service:
       main:
-        enabled: false  # Disable service since we're using hostNetwork
+        ports:
+          web:
+            enabled: true
+            port: 8080
+            targetPort: 8080
+          web-ssl:
+            enabled: true
+            port: 8443
+            targetPort: 8443
+          portal:
+            enabled: true
+            port: 8880
+            targetPort: 8880
+          portal-ssl:
+            enabled: true
+            port: 8843
+            targetPort: 8843
 
     ingress:
       main:
@@ -52,19 +68,4 @@ spec:
               - unifi.local
 
     hostNetwork: true
-    dnsPolicy: ClusterFirstWithHostNet
-
-    # Define container ports explicitly
-    ports:
-      web:
-        enabled: true
-        port: 8080
-      web-ssl:
-        enabled: true
-        port: 8443
-      portal:
-        enabled: true
-        port: 8880
-      portal-ssl:
-        enabled: true
-        port: 8843 
+    dnsPolicy: ClusterFirstWithHostNet 
