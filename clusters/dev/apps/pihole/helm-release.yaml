@@ -1,0 +1,62 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: pihole
+  namespace: pihole
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: pihole
+      version: "1.0.0"
+      sourceRef:
+        kind: HelmRepository
+        name: mojo2600
+        namespace: flux-system
+  values:
+    image:
+      repository: pihole/pihole
+      tag: latest
+      pullPolicy: IfNotPresent
+
+    persistence:
+      enabled: true
+      size: 10Gi
+      storageClass: "nfs-client"
+
+    env:
+      TZ: "America/Chicago"
+      WEBPASSWORD: "changeme"  # Change this to a secure password
+      VIRTUAL_HOST: "pihole.local"
+      PROXY_LOCATION: "pihole"
+      ServerIP: "192.168.86.31"  # Your node IP
+      DNS1: "1.1.1.1"
+      DNS2: "1.0.0.1"
+
+    service:
+      dns:
+        enabled: true
+        port: 53
+        type: ClusterIP
+      http:
+        enabled: true
+        port: 80
+        type: ClusterIP
+
+    ingress:
+      enabled: true
+      annotations:
+        kubernetes.io/ingress.class: nginx
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+      hosts:
+        - host: pihole.local
+          paths:
+            - path: /
+              pathType: Prefix
+      tls:
+        - secretName: pihole-tls
+          hosts:
+            - pihole.local
+
+    hostNetwork: true
+    dnsPolicy: ClusterFirstWithHostNet 
