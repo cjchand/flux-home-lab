@@ -4,5 +4,4 @@ kind: Kustomization
 resources:
   - helm-release.yaml
   - namespace.yaml
-  - helm-repository.yaml
-  - dns-forwarder.yaml 
+  - helm-repository.yaml 

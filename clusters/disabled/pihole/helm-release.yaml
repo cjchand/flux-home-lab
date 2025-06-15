@@ -32,11 +32,12 @@ spec:
       ServerIP: "192.168.86.31"  # Your node IP
       DNS1: "8.8.8.8"
       DNS2: "1.1.1.1"
+      DNS_PORT: "5353"  # Use a non-standard port
 
     service:
       dns:
         enabled: true
-        port: 5353
+        port: 5353  # Non-standard DNS port
         type: ClusterIP
       http:
         enabled: true
