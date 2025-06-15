@@ -36,7 +36,7 @@ spec:
     service:
       dns:
         enabled: true
-        port: 53
+        port: 5353
         type: ClusterIP
       http:
         enabled: true
@@ -58,5 +58,5 @@ spec:
           hosts:
             - pihole.local
 
-    hostNetwork: true
-    dnsPolicy: ClusterFirstWithHostNet 
+    hostNetwork: false
+    dnsPolicy: ClusterFirst 

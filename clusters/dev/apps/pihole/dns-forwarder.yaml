@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: dns-forwarder
+  namespace: pihole
+spec:
+  selector:
+    matchLabels:
+      app: dns-forwarder
+  template:
+    metadata:
+      labels:
+        app: dns-forwarder
+    spec:
+      hostNetwork: true
+      containers:
+      - name: dns-forwarder
+        image: alpine/socat
+        args:
+        - tcp-listen:53,reuseaddr,fork
+        - tcp-connect:pihole.pihole.svc.cluster.local:5353
+        ports:
+        - containerPort: 53
+          protocol: TCP
+        - containerPort: 53
+          protocol: UDP 
