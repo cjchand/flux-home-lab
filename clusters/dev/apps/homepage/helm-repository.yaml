@@ -1,8 +1,8 @@
 apiVersion: source.toolkit.fluxcd.io/v2beta1
 kind: HelmRepository
 metadata:
-  name: gethomepage
+  name: monsterrr
   namespace: flux-system
 spec:
   interval: 1h
-  url: https://gethomepage.github.io/homepage 
+  url: https://m0nsterrr.github.io/helm-charts 
