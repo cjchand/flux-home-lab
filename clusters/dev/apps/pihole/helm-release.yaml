@@ -30,8 +30,8 @@ spec:
       VIRTUAL_HOST: "pihole.local"
       PROXY_LOCATION: "pihole"
       ServerIP: "192.168.86.31"  # Your node IP
-      DNS1: "1.1.1.1"
-      DNS2: "1.0.0.1"
+      DNS1: "8.8.8.8"
+      DNS2: "1.1.1.1"
 
     service:
       dns:
