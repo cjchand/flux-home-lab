@@ -1,9 +1,10 @@
 apiVersion: source.toolkit.fluxcd.io/v1beta2
-kind: OCIRepository
+kind: GitRepository
 metadata:
   name: monsterrr
   namespace: flux-system
 spec:
   interval: 1h
-  url: oci://ghcr.io/m0nsterrr/helm-charts
-  provider: generic 
+  url: https://github.com/M0NsTeRRR/helm-charts
+  ref:
+    branch: main 

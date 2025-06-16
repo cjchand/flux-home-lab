@@ -7,10 +7,10 @@ spec:
   interval: 5m
   chart:
     spec:
-      chart: homepage
+      chart: ./charts/homepage
       version: "1.3.2"
       sourceRef:
-        kind: OCIRepository
+        kind: GitRepository
         name: monsterrr
         namespace: flux-system
   values:
