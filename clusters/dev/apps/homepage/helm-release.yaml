@@ -32,12 +32,15 @@ spec:
           - name: config
             mountPath: /app/config
 
-    persistence:
-      config:
-        enabled: true
-        existingClaim: homepage-config
+    extraVolumeMounts:
+      - name: config
         mountPath: /app/config
-        name: config
+        readOnly: false
+
+    extraVolumes:
+      - name: config
+        persistentVolumeClaim:
+          claimName: homepage-config
 
     env:
       - name: HOMEPAGE_ALLOWED_HOSTS
