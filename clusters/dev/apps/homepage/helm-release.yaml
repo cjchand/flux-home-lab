@@ -19,11 +19,16 @@ spec:
       tag: latest
       pullPolicy: IfNotPresent
 
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000
+
     persistence:
       config:
         enabled: true
-        size: 1Gi
-        storageClass: "nfs-client"
+        existingClaim: homepage-config
+        mountPath: /app/config
 
     env:
       - name: HOMEPAGE_ALLOWED_HOSTS
