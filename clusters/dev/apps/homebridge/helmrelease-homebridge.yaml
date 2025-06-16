@@ -55,7 +55,7 @@ spec:
         annotations:
           kubernetes.io/ingress.class: "public"
         hosts:
-          - host: homebridge.local
+          - host: homebridge.lan
             paths:
               - path: /
                 pathType: Prefix

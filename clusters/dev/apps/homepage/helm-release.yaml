@@ -43,7 +43,7 @@ spec:
 
     env:
       - name: HOMEPAGE_ALLOWED_HOSTS
-        value: "homepage.local"
+        value: "homepage.lan"
 
     service:
       main:
@@ -60,11 +60,11 @@ spec:
           kubernetes.io/ingress.class: nginx
           cert-manager.io/cluster-issuer: letsencrypt-prod
         hosts:
-          - homepage.local
+          - homepage.lan
         paths:
           - path: /
             pathType: Prefix
         tls:
           - secretName: homepage-tls
             hosts:
-              - homepage.local 
+              - homepage.lan 

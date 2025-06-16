@@ -32,7 +32,7 @@ spec:
         annotations:
           kubernetes.io/ingress.class: "public"
         hosts:
-          - host: teslamate.local
+          - host: teslamate.lan
             paths:
               - path: /
                 pathType: Prefix

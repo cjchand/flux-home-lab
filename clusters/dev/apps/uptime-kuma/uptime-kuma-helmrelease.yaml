@@ -20,7 +20,7 @@ spec:
     ingress:
       enabled: true
       hosts:
-        - host: monitoring.local
+        - host: monitoring.lan
           paths:
             - path: /
               pathType: ImplementationSpecific
