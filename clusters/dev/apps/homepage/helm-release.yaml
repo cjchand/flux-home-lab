@@ -8,9 +8,9 @@ spec:
   chart:
     spec:
       chart: homepage
-      version: "3.3.0"
+      version: "1.3.2"
       sourceRef:
-        kind: HelmRepository
+        kind: OCIRepository
         name: monsterrr
         namespace: flux-system
   values:
