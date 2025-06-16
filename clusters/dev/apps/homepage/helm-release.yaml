@@ -24,11 +24,20 @@ spec:
       runAsGroup: 1000
       fsGroup: 1000
 
+    initContainers:
+      - name: init-chown-data
+        image: busybox
+        command: ["sh", "-c", "chown -R 1000:1000 /app/config && chmod -R 755 /app/config"]
+        volumeMounts:
+          - name: config
+            mountPath: /app/config
+
     persistence:
       config:
         enabled: true
         existingClaim: homepage-config
         mountPath: /app/config
+        name: config
 
     env:
       - name: HOMEPAGE_ALLOWED_HOSTS
