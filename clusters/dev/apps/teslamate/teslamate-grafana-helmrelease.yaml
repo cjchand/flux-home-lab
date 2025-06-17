@@ -36,11 +36,10 @@ spec:
         kubernetes.io/ingress.class: "public"
         external-dns.alpha.kubernetes.io/target: 192.168.86.31
         gethomepage.dev/enabled: "true"
-          gethomepage.dev/enabled: "true"
-          gethomepage.dev/description: Teslamate Grafana
-          gethomepage.dev/group: Lifestyle
-          gethomepage.dev/name: "Teslamate Grafana"
-          gethomepage.dev/icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Grafana_logo.svg/1024px-Grafana_logo.svg.png?20230113183101"
+        gethomepage.dev/description: Teslamate Grafana
+        gethomepage.dev/group: Lifestyle
+        gethomepage.dev/name: "Teslamate Grafana"
+        gethomepage.dev/icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Grafana_logo.svg/1024px-Grafana_logo.svg.png?20230113183101"
       path: /
       hosts:
         - teslamate-grafana.internal
