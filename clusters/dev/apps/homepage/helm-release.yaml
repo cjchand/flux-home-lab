@@ -61,3 +61,6 @@ spec:
         - secretName: homepage-tls
           hosts:
             - homepage.internal 
+
+    rbac:
+      enabled: true
