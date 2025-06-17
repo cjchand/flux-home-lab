@@ -41,7 +41,7 @@ spec:
       - name: config
         mountPath: /app/config
 
-    env:
+    extraEnv:
       - name: HOMEPAGE_ALLOWED_HOSTS
         value: "homepage.internal"
 
