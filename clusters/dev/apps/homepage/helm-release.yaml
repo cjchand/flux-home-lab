@@ -58,7 +58,7 @@ spec:
         - host: homepage.internal
           paths:
             - path: /
-              pathType: ImplementationSpecific
+              pathType: Prefix
       tls:
         - secretName: homepage-tls
           hosts:
