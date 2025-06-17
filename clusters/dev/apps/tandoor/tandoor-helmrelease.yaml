@@ -56,6 +56,10 @@ spec:
         enabled: true
         annotations:
           gethomepage.dev/enabled: "true"
+          gethomepage.dev/description: Tandoor Recipes
+          gethomepage.dev/group: Lifestyle
+          gethomepage.dev/name: "Tandoor Recipes"
+          gethomepage.dev/icon: "https://tandoor.dev/static/assets/brand_logo.png"
         hosts:
           - host: recipes.internal
             paths:

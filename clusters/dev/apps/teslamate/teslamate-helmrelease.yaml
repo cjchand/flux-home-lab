@@ -32,6 +32,10 @@ spec:
         annotations:
           kubernetes.io/ingress.class: "public"
           gethomepage.dev/enabled: "true"
+          gethomepage.dev/description: Teslamate Core
+          gethomepage.dev/group: Lifestyle
+          gethomepage.dev/name: "Teslamate Core"
+          gethomepage.dev/icon: "https://docs.teslamate.org/img/logo.svg"
         hosts:
           - host: teslamate.internal
             paths:

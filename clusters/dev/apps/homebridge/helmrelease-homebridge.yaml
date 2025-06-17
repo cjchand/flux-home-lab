@@ -55,6 +55,10 @@ spec:
         annotations:
           kubernetes.io/ingress.class: "public"
           gethomepage.dev/enabled: "true"
+          gethomepage.dev/description: Homebridge
+          gethomepage.dev/group: Automation
+          gethomepage.dev/name: "Homebridge"
+          gethomepage.dev/icon: "https://raw.githubusercontent.com/homebridge/branding/master/logos/homebridge-color-round-stylized.png"
         hosts:
           - host: homebridge.internal
             paths:
