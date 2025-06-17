@@ -21,6 +21,11 @@ spec:
       enabled: true
       annotations:
         gethomepage.dev/enabled: "true"
+        gethomepage.dev/description: Monitoring Server
+        gethomepage.dev/group: Monitoring
+        gethomepage.dev/icon: "https://uptime.kuma.pet/img/icon.svg"
+        gethomepage.dev/name: "Uptime Kuma"
+        gethomepage.dev/pod-selector: ""
       hosts:
         - host: monitoring.internal
           paths:
