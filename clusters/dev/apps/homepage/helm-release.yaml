@@ -33,7 +33,7 @@ spec:
           claimName: homepage-config
       - name: k8s-config
         configMap:
-          name: homepage-k8s-config
+          name: homepage
 
     volumeMounts:
       - name: config
