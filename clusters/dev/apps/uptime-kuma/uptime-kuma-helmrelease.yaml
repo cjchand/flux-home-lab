@@ -19,6 +19,8 @@ spec:
     useDeploy: false
     ingress:
       enabled: true
+      annotations:
+        gethomepage.dev/enabled: "true"
       hosts:
         - host: monitoring.internal
           paths:

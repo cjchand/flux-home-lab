@@ -54,6 +54,8 @@ spec:
       # @default -- See [values.yaml](./values.yaml)
       main:
         enabled: true
+        annotations:
+          gethomepage.dev/enabled: "true"
         hosts:
           - host: recipes.internal
             paths:

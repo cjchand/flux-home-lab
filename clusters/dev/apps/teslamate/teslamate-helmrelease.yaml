@@ -31,6 +31,7 @@ spec:
         enabled: true
         annotations:
           kubernetes.io/ingress.class: "public"
+          gethomepage.dev/enabled: "true"
         hosts:
           - host: teslamate.internal
             paths:
