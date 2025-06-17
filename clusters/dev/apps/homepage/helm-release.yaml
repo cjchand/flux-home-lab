@@ -51,8 +51,7 @@ spec:
 
     ingress:
       enabled: true
-      annotations:
-        kubernetes.io/ingress.class: nginx
+      ingressClassName: public
       hosts:
         - host: homepage.internal
           paths:
