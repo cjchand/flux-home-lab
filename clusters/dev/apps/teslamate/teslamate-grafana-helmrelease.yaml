@@ -37,7 +37,7 @@ spec:
         external-dns.alpha.kubernetes.io/target: 192.168.86.31
       path: /
       hosts:
-        - teslamate-grafana.lan
+        - teslamate-grafana.internal
     env:
       DATABASE_HOST: teslamate-postgres-nfs-postgresql
       DATABASE_PORT: 5432

@@ -27,7 +27,7 @@ spec:
     env:
       TZ: "America/Chicago"
       WEBPASSWORD: "changeme"  # Change this to a secure password
-      VIRTUAL_HOST: "pihole.lan"
+      VIRTUAL_HOST: "pihole.internal"
       PROXY_LOCATION: "pihole"
       ServerIP: "192.168.86.31"  # Your node IP
       DNS1: "8.8.8.8"
@@ -50,14 +50,14 @@ spec:
         kubernetes.io/ingress.class: nginx
         cert-manager.io/cluster-issuer: letsencrypt-prod
       hosts:
-        - pihole.lan
+        - pihole.internal
       paths:
         - path: /
           pathType: Prefix
       tls:
         - secretName: pihole-tls
           hosts:
-            - pihole.lan
+            - pihole.internal
 
     hostNetwork: false
     dnsPolicy: ClusterFirst 
