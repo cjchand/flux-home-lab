@@ -46,12 +46,11 @@ spec:
         value: "homepage.internal"
 
     service:
-      main:
-        ports:
-          http:
-            enabled: true
-            port: 3000
-            targetPort: 3000
+      ports:
+        http:
+          enabled: true
+          port: 3000
+          targetPort: 3000
 
     ingress:
       enabled: true
