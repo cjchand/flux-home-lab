@@ -19,7 +19,6 @@ spec:
       tag: latest
       pullPolicy: IfNotPresent
 
-
     initContainers:
       - name: init-chown-data
         image: busybox
@@ -32,10 +31,16 @@ spec:
       - name: config
         persistentVolumeClaim:
           claimName: homepage-config
+      - name: k8s-config
+        configMap:
+          name: homepage-k8s-config
 
     volumeMounts:
       - name: config
         mountPath: /app/config
+      - name: k8s-config
+        mountPath: /app/config/kubernetes.yaml
+        subPath: kubernetes.yaml
 
     extraEnv:
       - name: HOMEPAGE_ALLOWED_HOSTS
