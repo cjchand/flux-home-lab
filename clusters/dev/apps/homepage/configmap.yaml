@@ -8,7 +8,9 @@ metadata:
 data:
   kubernetes.yaml: |
     mode: cluster
-  settings.yaml: ""
+  settings.yaml: |
+    title: "Chandler Homelab"
+    theme: "dark"
   custom.css: ""
   custom.js: ""
   bookmarks.yaml: |
