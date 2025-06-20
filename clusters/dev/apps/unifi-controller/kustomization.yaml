@@ -8,5 +8,3 @@ resources:
   - mongodb-sealed-secret.yaml
   - mongodb-helm-release.yaml
   - helm-release.yaml
-  - README.md
-  - deploy-notes.md 
