@@ -21,10 +21,18 @@ spec:
       username: unifi
       password: ""
       existingSecret: "unifi-mongodb-secret"
-      secretKeys:
-        adminPasswordKey: "mongodb-root-password"
-        userPasswordKey: "mongodb-passwords"
     primary:
+      extraEnvVars:
+        - name: MONGODB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: unifi-mongodb-secret
+              key: mongodb-root-password
+        - name: MONGODB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: unifi-mongodb-secret
+              key: mongodb-passwords
       persistence:
         enabled: true
         storageClass: "nfs-client"
