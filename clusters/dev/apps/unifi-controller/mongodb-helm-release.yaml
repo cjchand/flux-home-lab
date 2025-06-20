@@ -14,6 +14,8 @@ spec:
         name: bitnami
         namespace: unifi
   values:
+    global:
+      storageClass: "nfs-client"
     architecture: standalone
     auth:
       enabled: true
@@ -35,7 +37,6 @@ spec:
               key: mongodb-passwords
       persistence:
         enabled: true
-        storageClass: "nfs-client"
         accessModes:
           - ReadWriteMany
         size: 8Gi
