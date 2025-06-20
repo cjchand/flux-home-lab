@@ -23,7 +23,7 @@ spec:
       existingSecret: "unifi-mongodb-secret"
       secretKeys:
         adminPasswordKey: "mongodb-root-password"
-        userPasswordKey: "mongodb-password"
+        userPasswordKey: "mongodb-passwords"
     primary:
       persistence:
         enabled: true
