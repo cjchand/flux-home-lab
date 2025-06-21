@@ -5,7 +5,6 @@ resources:
   - flux-system
   - cluster-services
   - apps/homepage
-  - apps/external-dns
   - apps/uptime-kuma
   - apps/teslamate
   - apps/homebridge
