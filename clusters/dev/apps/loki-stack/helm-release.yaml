@@ -81,7 +81,6 @@ spec:
         enabled: true
         ingressClassName: "public"
         annotations:
-          cert-manager.io/cluster-issuer: letsencrypt-prod
           gethomepage.dev/enabled: "true"
           gethomepage.dev/description: Grafana Dashboard
           gethomepage.dev/group: Monitoring
@@ -89,10 +88,6 @@ spec:
           gethomepage.dev/icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Grafana_logo.svg/1024px-Grafana_logo.svg.png"
         hosts:
           - grafana.internal
-        tls:
-          - secretName: grafana-tls
-            hosts:
-              - grafana.internal
       resources:
         requests:
           cpu: 100m
