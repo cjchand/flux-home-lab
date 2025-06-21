@@ -79,8 +79,8 @@ spec:
         size: 5Gi
       ingress:
         enabled: true
+        ingressClassName: "public"
         annotations:
-          kubernetes.io/ingress.class: "public"
           cert-manager.io/cluster-issuer: letsencrypt-prod
           gethomepage.dev/enabled: "true"
           gethomepage.dev/description: Grafana Dashboard
