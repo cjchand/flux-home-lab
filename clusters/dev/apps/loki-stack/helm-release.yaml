@@ -88,10 +88,7 @@ spec:
           gethomepage.dev/name: "Grafana"
           gethomepage.dev/icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Grafana_logo.svg/1024px-Grafana_logo.svg.png"
         hosts:
-          - host: grafana.internal
-            paths:
-              - path: /
-                pathType: Prefix
+          - grafana.internal
         tls:
           - secretName: grafana-tls
             hosts:
