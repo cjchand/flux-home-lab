@@ -80,7 +80,7 @@ spec:
       ingress:
         enabled: true
         annotations:
-          kubernetes.io/ingress.class: nginx
+          kubernetes.io/ingress.class: public
           cert-manager.io/cluster-issuer: letsencrypt-prod
           gethomepage.dev/enabled: "true"
           gethomepage.dev/description: Grafana Dashboard
