@@ -34,7 +34,7 @@ data:
         {
           "datasource": {
             "type": "loki",
-            "uid": "loki"
+            "uid": "loki-stack"
           },
           "fieldConfig": {
             "defaults": {
@@ -109,7 +109,7 @@ data:
             {
               "datasource": {
                 "type": "loki",
-                "uid": "loki"
+                "uid": "loki-stack"
               },
               "editorMode": "code",
               "expr": "sum(rate({job=\"kubernetes-pods-name\"}[5m])) by (namespace)",
@@ -123,7 +123,7 @@ data:
         {
           "datasource": {
             "type": "loki",
-            "uid": "loki"
+            "uid": "loki-stack"
           },
           "fieldConfig": {
             "defaults": {
@@ -198,7 +198,7 @@ data:
             {
               "datasource": {
                 "type": "loki",
-                "uid": "loki"
+                "uid": "loki-stack"
               },
               "editorMode": "code",
               "expr": "sum(rate({job=\"kubernetes-pods-name\"}[5m])) by (app)",
@@ -212,7 +212,7 @@ data:
         {
           "datasource": {
             "type": "loki",
-            "uid": "loki"
+            "uid": "loki-stack"
           },
           "fieldConfig": {
             "defaults": {
@@ -267,7 +267,7 @@ data:
             {
               "datasource": {
                 "type": "loki",
-                "uid": "loki"
+                "uid": "loki-stack"
               },
               "editorMode": "code",
               "expr": "{job=\"kubernetes-pods-name\"} | json | line_format \"{{.timestamp}} {{.level}} {{.message}}\"",
@@ -281,7 +281,7 @@ data:
         {
           "datasource": {
             "type": "loki",
-            "uid": "loki"
+            "uid": "loki-stack"
           },
           "fieldConfig": {
             "defaults": {
@@ -356,7 +356,7 @@ data:
             {
               "datasource": {
                 "type": "loki",
-                "uid": "loki"
+                "uid": "loki-stack"
               },
               "editorMode": "code",
               "expr": "sum(rate({job=\"kubernetes-pods-name\"} |= \"error\" [5m])) by (namespace)",
@@ -370,7 +370,7 @@ data:
         {
           "datasource": {
             "type": "loki",
-            "uid": "loki"
+            "uid": "loki-stack"
           },
           "fieldConfig": {
             "defaults": {
@@ -445,7 +445,7 @@ data:
             {
               "datasource": {
                 "type": "loki",
-                "uid": "loki"
+                "uid": "loki-stack"
               },
               "editorMode": "code",
               "expr": "sum(rate({job=\"kubernetes-pods-name\"} |= \"warn\" [5m])) by (namespace)",
