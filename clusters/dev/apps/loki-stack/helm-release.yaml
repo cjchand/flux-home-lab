@@ -17,6 +17,12 @@ spec:
     # Loki configuration
     loki:
       auth_enabled: false
+      querier:
+        extra_query_delay: 500ms
+      frontend:
+        scheduler_worker_concurrency: 15
+      query_scheduler:
+        max_outstanding_requests_per_tenant: 1000
       commonConfig:
         path_prefix: /var/loki
         storage:
