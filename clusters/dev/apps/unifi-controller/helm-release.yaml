@@ -8,14 +8,14 @@ spec:
   chart:
     spec:
       chart: unifi
-      version: "5.1.2"
+      version: "9.2.87"
       sourceRef:
         kind: HelmRepository
         name: geek-cookbook
         namespace: flux-system
   values:
     image:
-      repository: linuxserver/unifi-controller
+      repository: linuxserver/unifi-network-application
       tag: latest
       pullPolicy: IfNotPresent
     persistence:
