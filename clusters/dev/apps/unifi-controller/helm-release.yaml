@@ -39,7 +39,7 @@ spec:
         valueFrom:
           secretKeyRef:
             name: unifi-mongodb-secret
-            key: mongodb-passwords
+            key: mongodb-password-urlencoded
 
     service:
       main:
