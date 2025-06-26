@@ -30,9 +30,8 @@ spec:
       TZ: "America/Chicago"
       PUID: "568"
       PGID: "568"
-      # Enable Spring Boot Debugging
-      LOG_LEVEL: DEBUG
-      LOGGING_LEVEL_ROOT: DEBUG
+      # Increase MongoDB logging level
+      JAVA_OPTS: "-Dorg.mongodb.driver.level=DEBUG"
       # MongoDB configuration for external database
       MONGO_HOST: unifi-mongodb
       MONGO_PORT: 27017
