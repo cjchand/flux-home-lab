@@ -40,21 +40,6 @@ spec:
       isDefault: false
       name: traefik
 
-    # Ports configuration (different from NGINX)
-    ports:
-      web:
-        port: 8080
-        expose: true
-        exposedPort: 8080
-        protocol: HTTP
-      websecure:
-        port: 8443
-        expose: true
-        exposedPort: 8443
-        protocol: HTTPS
-        tls:
-          enabled: true
-
     # Persistence for certificates
     persistence:
       enabled: true
@@ -88,8 +73,6 @@ spec:
       - "--metrics.prometheus=true"
       - "--providers.kubernetesingress=true"
       - "--providers.kubernetescrd=true"
-      - "--entrypoints.web.address=:8080"
-      - "--entrypoints.websecure.address=:8443"
       - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
       - "--certificatesresolvers.letsencrypt.acme.email=admin@internal"
       - "--certificatesresolvers.letsencrypt.acme.storage=/data/acme.json"
