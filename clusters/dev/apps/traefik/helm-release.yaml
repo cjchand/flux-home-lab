@@ -1,0 +1,103 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: traefik
+  namespace: traefik
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: traefik
+      version: "24.0.0"
+      sourceRef:
+        kind: HelmRepository
+        name: traefik
+        namespace: traefik
+  values:
+    # Ingress configuration
+    ingressRoute:
+      dashboard:
+        enabled: true
+        ingress:
+          enabled: true
+          ingressClassName: traefik
+          hosts:
+            - traefik-dashboard.internal
+          tls:
+            - secretName: traefik-dashboard-tls
+              hosts:
+                - traefik-dashboard.internal
+
+    # Certificate management with Let's Encrypt
+    certResolver:
+      letsencrypt:
+        email: admin@internal
+        storage: /data/acme.json
+        tlsChallenge: {}
+
+    # Ingress configuration
+    ingressClass:
+      isDefault: false
+      name: traefik
+
+    # Ports configuration (different from NGINX)
+    ports:
+      web:
+        port: 8080
+        expose: true
+        exposedPort: 8080
+        protocol: HTTP
+      websecure:
+        port: 8443
+        expose: true
+        exposedPort: 8443
+        protocol: HTTPS
+        tls:
+          enabled: true
+
+    # Persistence for certificates
+    persistence:
+      enabled: true
+      storageClass: "nfs-client"
+      accessMode: ReadWriteOnce
+      size: 1Gi
+
+    # Resources
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+    # Service configuration
+    service:
+      type: LoadBalancer
+      annotations:
+        gethomepage.dev/enabled: "true"
+        gethomepage.dev/description: Traefik Dashboard
+        gethomepage.dev/group: Infrastructure
+        gethomepage.dev/name: "Traefik"
+        gethomepage.dev/icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Traefik.logo.svg/1200px-Traefik.logo.svg.png"
+
+    # Additional arguments for better performance
+    additionalArguments:
+      - "--log.level=INFO"
+      - "--accesslog=true"
+      - "--metrics.prometheus=true"
+      - "--providers.kubernetesingress=true"
+      - "--providers.kubernetescrd=true"
+      - "--entrypoints.web.address=:8080"
+      - "--entrypoints.websecure.address=:8443"
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.email=admin@internal"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/data/acme.json"
+
+    # Prometheus metrics
+    metrics:
+      prometheus:
+        enabled: true
+        serviceMonitor:
+          enabled: true
+          interval: 30s 
