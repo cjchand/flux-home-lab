@@ -20,10 +20,10 @@ spec:
       pullPolicy: IfNotPresent
     persistence:
       data:
-        enabled: false
-        # accessMode: ReadWriteMany
-        # size: 10Gi
-        # storageClass: "nfs-client"
+        enabled: true
+        accessMode: ReadWriteMany
+        size: 1Gi
+        storageClass: "nfs-client"
     
 
     env:
