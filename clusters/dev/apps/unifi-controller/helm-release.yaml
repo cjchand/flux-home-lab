@@ -75,6 +75,9 @@ spec:
             enabled: true
             port: 5514
             protocol: UDP
+        # Add external IP for reliable DNS resolution
+        externalIPs:
+          - 192.168.86.57
 
     ingress:
       main:
@@ -94,4 +97,15 @@ spec:
               - unifi.internal
 
     hostNetwork: true
-    dnsPolicy: ClusterFirstWithHostNet 
+    dnsPolicy: ClusterFirstWithHostNet
+    
+    # Node affinity to ensure consistent placement on microk8s-node-03
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - microk8s-node-03 
