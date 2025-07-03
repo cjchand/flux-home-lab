@@ -97,12 +97,12 @@ spec:
     dnsPolicy: ClusterFirstWithHostNet
     
     # Node affinity to ensure consistent placement on microk8s-node-03
-    affinity:
-      nodeAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-          - matchExpressions:
-            - key: kubernetes.io/hostname
-              operator: In
-              values:
-              - microk8s-node-03 
+    # affinity:
+    #   nodeAffinity:
+    #     requiredDuringSchedulingIgnoredDuringExecution:
+    #       nodeSelectorTerms:
+    #       - matchExpressions:
+    #         - key: kubernetes.io/hostname
+    #           operator: In
+    #           values:
+    #           - microk8s-node-03 
