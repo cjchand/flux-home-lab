@@ -75,9 +75,6 @@ spec:
             enabled: true
             port: 5514
             protocol: UDP
-        # Add external IP for reliable DNS resolution
-        externalIPs:
-          - 192.168.86.57
 
     ingress:
       main:
