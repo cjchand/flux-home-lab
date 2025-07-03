@@ -96,7 +96,7 @@ spec:
     hostNetwork: true
     dnsPolicy: ClusterFirstWithHostNet
     
-    Node affinity to ensure consistent placement on microk8s-node-03
+    # Node affinity to ensure consistent placement on microk8s-node-03
     affinity:
       nodeAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:
