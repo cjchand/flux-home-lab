@@ -24,8 +24,6 @@ spec:
         ports:
           http:
             port: 4000
-    nodeSelector:
-      disktype: ssd
     ingress:
       main:
         enabled: true

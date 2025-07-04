@@ -19,8 +19,6 @@ spec:
       repository: teslamate/grafana
       tag: "1.33"
       pullPolicy: IfNotPresent
-    nodeSelector:
-      disktype: ssd
     persistence:
       type: pvc
       enabled: true
