@@ -85,7 +85,7 @@ spec:
         size: 5Gi
       ingress:
         enabled: true
-        ingressClassName: "public"
+        ingressClassName: traefik
         annotations:
           gethomepage.dev/enabled: "true"
           gethomepage.dev/description: Grafana Dashboard

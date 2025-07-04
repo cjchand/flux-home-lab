@@ -52,7 +52,7 @@ spec:
 
     ingress:
       enabled: true
-      ingressClassName: public
+      ingressClassName: traefik
       hosts:
         - host: homepage.internal
           paths:

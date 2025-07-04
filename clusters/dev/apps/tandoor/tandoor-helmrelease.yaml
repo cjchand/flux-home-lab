@@ -54,6 +54,7 @@ spec:
       # @default -- See [values.yaml](./values.yaml)
       main:
         enabled: true
+        ingressClassName: traefik
         annotations:
           gethomepage.dev/enabled: "true"
           gethomepage.dev/description: Tandoor Recipes

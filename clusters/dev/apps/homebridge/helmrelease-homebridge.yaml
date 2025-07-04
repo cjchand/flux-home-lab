@@ -52,8 +52,8 @@ spec:
     ingress:
       main:
         enabled: true
+        ingressClassName: traefik
         annotations:
-          kubernetes.io/ingress.class: "public"
           gethomepage.dev/enabled: "true"
           gethomepage.dev/description: Homebridge
           gethomepage.dev/group: Automation
