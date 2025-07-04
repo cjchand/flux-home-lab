@@ -13,10 +13,4 @@ spec:
         kind: HelmRepository
         name: metallb
         namespace: metallb-system
-  values:
-    configInline:
-      address-pools:
-        - name: default
-          protocol: layer2
-          addresses:
-            - 192.168.86.201-192.168.86.250 
+  values: 
