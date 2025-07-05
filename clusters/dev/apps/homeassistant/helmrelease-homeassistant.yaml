@@ -35,12 +35,7 @@ spec:
       PUID: "1000"
       # -- Specify the group ID the application will run as
       PGID: "1000"
-      # -- Trust reverse proxy headers
-      HTTP_PROXY: "true"
-      # -- Trusted proxies (your node IPs)
-      TRUSTED_PROXIES: "192.168.86.0/24"
-      # -- Use X-Forwarded-For headers
-      USE_X_FORWARDED_FOR: "true"
+
 
     # -- Configures service settings for the chart.
     # @default -- See values.yaml
@@ -63,6 +58,12 @@ spec:
           gethomepage.dev/group: Automation
           gethomepage.dev/name: "Home Assistant"
           gethomepage.dev/icon: "https://raw.githubusercontent.com/home-assistant/assets/master/logo/logo.png"
+          # -- Traefik annotations for reverse proxy
+          traefik.ingress.kubernetes.io/router.entrypoints: websecure
+          traefik.ingress.kubernetes.io/router.tls: "true"
+          # -- Trust reverse proxy headers
+          traefik.ingress.kubernetes.io/headers.customrequestheaders.X-Forwarded-Proto: "https"
+          traefik.ingress.kubernetes.io/headers.customrequestheaders.X-Forwarded-Host: "homeassistant.internal"
         hosts:
           - host: homeassistant.internal
             paths:
