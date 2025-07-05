@@ -6,4 +6,4 @@ metadata:
   namespace: homeassistant
 spec:
   interval: 24h
-  url: https://pajikos.github.io/helm-charts/ 
+  url: http://pajikos.github.io/home-assistant-helm-chart/ 
