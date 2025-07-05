@@ -19,7 +19,7 @@ spec:
   values:
     image:
       # -- image repository
-      repository: homeassistant/home-assistant
+      repository: ghcr.io/home-assistant/home-assistant
       # -- image tag
       # @default -- chart.appVersion
       tag: "2025.7"
@@ -58,12 +58,8 @@ spec:
           gethomepage.dev/group: Automation
           gethomepage.dev/name: "Home Assistant"
           gethomepage.dev/icon: "https://raw.githubusercontent.com/home-assistant/assets/master/logo/logo.png"
-          # -- Traefik annotations for reverse proxy
-          traefik.ingress.kubernetes.io/router.entrypoints: websecure
-          traefik.ingress.kubernetes.io/router.tls: "true"
-          # -- Trust reverse proxy headers
-          traefik.ingress.kubernetes.io/headers.customrequestheaders.X-Forwarded-Proto: "https"
-          traefik.ingress.kubernetes.io/headers.customrequestheaders.X-Forwarded-Host: "homeassistant.internal"
+          # -- Force HTTP for internal access
+          traefik.ingress.kubernetes.io/router.entrypoints: web
         hosts:
           - host: homeassistant.internal
             paths:
