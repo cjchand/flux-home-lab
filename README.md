@@ -10,72 +10,11 @@ At this point, I knew I wanted to bring [Flux](https://fluxcd.io/) into the mix,
 
 That brings us to this repo: This is how I manage not only underlying cluster-wide services ([NFS-backed PVs](https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner), [SealedSecrets](https://fluxcd.io/docs/guides/sealed-secrets/), etc), but also any apps/services I want to run on top.
 
-# Flux
+# Documentation
 
-All of the Flux-related assets are in the [dev cluster directory](./clusters/dev/). Currently, the directory structure is:
-
-```
-├── clusters
-│   ├── dev
-│   │   ├── apps
-│   │   │   └── teslamate
-│   │   │       ├── postgres-nfs-helmrelease.yaml
-│   │   │       ├── source-helmrepo-bitnami.yaml
-│   │   │       ├── source-helmrepo-grafana.yaml
-│   │   │       ├── source-helmrepo-k8s-at-home.yaml
-│   │   │       ├── teslamate-grafana-helmrelease.yaml
-│   │   │       ├── teslamate-helmrelease.yaml
-│   │   │       └── teslamate-postgres-sealed.yaml
-│   │   ├── cluster-services
-│   │   │   ├── nfs-external-provisioner-helmrelease.yaml
-│   │   │   ├── sealed-secrets-helmrelease.yaml
-│   │   │   ├── source-helmrepo-nfs-external-provisioner.yaml
-│   │   │   └── source-helmrepo-sealed-secrets.yaml
-│   │   └── flux-system
-│   │       ├── gotk-components.yaml
-│   │       ├── gotk-sync.yaml
-│   │       └── kustomization.yaml
-│   └── disabled
-│       └── mosquitto-helmrelease.yaml
-```
-
-Note: The `disabled` directory is a simple way to remove items from Flux's purview without deleting the file itself. This is because `gotk-sync.yaml` tells the Flux components deployed in my cluster to only look at files under `./clusters/dev`:
-
-```spec:
-  interval: 10m0s
-  path: ./clusters/dev
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-```
-
-## SealedSecrets
-
-A key feature used is [SealedSecrets](https://fluxcd.io/docs/guides/sealed-secrets/), which allows for encrypted secrets to be safely committed to a public repo. Absent this, secrets would have to be managed manually outside of Flux.
-
-Check out the [SealedSecrets doc](./docs/sealed-secrets.md) for details on how it all works.
-
-# Topology
-
-I am starting off pretty basic, so nothing super thrilling about the topology currently, but here is what it looks like.
-
-## Network
-![Network](./docs/assets/images/home-lab-physical.png)
-
-Note: There are Calico VLANs managed by MicroK8s that aren't (yet) represented on this diagram.
-
-## Hardware
-
-![Hardware](./docs/assets/images/home-lab-kubernetes-infra.png)
-
-# Applications
-
-So far, there is only one application deployed: [Teslamate](https://github.com/adriankumpf/teslamate), a service that pulls a myriad of data from Tesla's APIs.
-
-Logically, the deployment looks like this:
-
-![teslamate-deployment](./docs/assets/images/home-lab-teslamate-logical.png)
+- **[Flux](./docs/Flux/README.md)** - GitOps setup and cluster management
+- **[Topology](./docs/Topology/README.md)** - Network and hardware architecture
+- **[Applications](./docs/Applications/README.md)** - Deployed services and namespace diagrams
 
 # The Future
 
