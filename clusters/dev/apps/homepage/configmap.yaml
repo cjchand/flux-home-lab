@@ -31,7 +31,9 @@ data:
           show: true
           cpu: true
           memory: true
+          disk: true
           showLabel: true
+          label: "nodes"
     - resources:
         backend: resources
         expanded: true
