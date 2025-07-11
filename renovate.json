@@ -19,8 +19,7 @@
       ],
       "matchFileNames": [
         "clusters/dev/apps/**/helmrelease.yaml"
-      ],
-      "groupName": "HelmRelease and image updates"
+      ]
     }
   ]
 }
