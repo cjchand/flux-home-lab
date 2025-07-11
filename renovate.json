@@ -18,12 +18,20 @@
       "groupName": "HelmRelease updates"
     },
     {
-      "matchManagers": ["docker"],
-      "matchDatasources": ["docker"],
+      "matchManagers": ["regex"],
       "matchFileNames": [
         "clusters/dev/apps/**/helmrelease.yaml"
       ],
-      "groupName": "App image tag updates"
+      "groupName": "App image tag updates",
+      "regexManagers": [
+        {
+          "fileMatch": ["clusters/dev/apps/.*/helmrelease.yaml$"],
+          "matchStrings": [
+            "repository:\\s*['\"]?(?<depName>[^'\"\\s]+)['\"]?\\s*\\ntag:\\s*['\"]?(?<currentValue>[\\w\\.-]+)['\"]?"
+          ],
+          "datasourceTemplate": "docker"
+        }
+      ]
     }
   ]
 }
