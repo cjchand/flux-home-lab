@@ -8,7 +8,7 @@
   },
   "packageRules": [
     {
-      "managers": ["helmfile", "helm-values", "helm"],
+      "managers": ["helmfile", "helm-values"],
       "matchPaths": [
         "clusters/dev/apps/**/helmrelease-*.yaml"
       ],
