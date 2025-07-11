@@ -39,8 +39,7 @@ spec:
       - name: config
         mountPath: /app/config
       - name: k8s-config
-        mountPath: /app/config/kubernetes.yaml
-        subPath: kubernetes.yaml
+        mountPath: /app/config
 
     extraEnv:
       - name: HOMEPAGE_ALLOWED_HOSTS
