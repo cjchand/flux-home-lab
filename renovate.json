@@ -18,14 +18,19 @@
       "groupName": "HelmRelease updates"
     },
     {
-      "matchManagers": ["regex"],
+      "matchManagers": [
+        "custom.regex"
+      ],
       "matchFileNames": [
         "clusters/dev/apps/**/helmrelease.yaml"
       ],
       "groupName": "App image tag updates",
-      "regexManagers": [
+      "customManagers": [
         {
-          "fileMatch": ["clusters/dev/apps/.*/helmrelease.yaml$"],
+          "customType": "regex",
+          "managerFilePatterns": [
+            "/clusters/dev/apps/.*/helmrelease.yaml$/"
+          ],
           "matchStrings": [
             "repository:\\s*['\"]?(?<depName>[^'\"\\s]+)['\"]?\\s*\\ntag:\\s*['\"]?(?<currentValue>[\\w\\.-]+)['\"]?"
           ],
