@@ -1,6 +1,18 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended"
+    "config:base"
+  ],
+  "helm-values": {
+    "enabled": true
+  },
+  "packageRules": [
+    {
+      "managers": ["helmfile", "helm-values", "helm"],
+      "matchPaths": [
+        "clusters/dev/apps/**/helmrelease-*.yaml"
+      ],
+      "groupName": "HelmRelease updates"
+    }
   ]
 }
