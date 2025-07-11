@@ -4,4 +4,4 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - source-helmrepo-k8s-at-home.yaml
-  - helmrelease-homeassistant.yaml 
+  - helmrelease.yaml 

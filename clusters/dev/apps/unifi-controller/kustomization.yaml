@@ -6,5 +6,5 @@ resources:
   - helm-repository.yaml
   - mongodb-helm-repository.yaml
   - mongodb-sealed-secret.yaml
-  - mongodb-helm-release.yaml
-  - helm-release.yaml
+  - mongodb-helmrelease.yaml
+  - helmrelease.yaml

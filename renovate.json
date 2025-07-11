@@ -13,9 +13,17 @@
         "helm-values"
       ],
       "matchFileNames": [
-        "clusters/dev/apps/**/helmrelease-*.yaml"
+        "clusters/dev/apps/**/helmrelease.yaml"
       ],
       "groupName": "HelmRelease updates"
+    },
+    {
+      "matchManagers": ["docker"],
+      "matchDatasources": ["docker"],
+      "matchFileNames": [
+        "clusters/dev/apps/**/helmrelease.yaml"
+      ],
+      "groupName": "App image tag updates"
     }
   ]
 }

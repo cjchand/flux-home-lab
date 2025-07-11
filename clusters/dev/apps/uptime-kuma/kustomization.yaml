@@ -3,4 +3,4 @@ kind: Kustomization
 
 resources:
   - source-helmrepo-uptime-kuma.yaml
-  - uptime-kuma-helmrelease.yaml 
+  - helmrelease.yaml 

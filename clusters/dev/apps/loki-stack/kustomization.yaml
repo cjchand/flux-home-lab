@@ -4,5 +4,5 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - helm-repository.yaml
-  - helm-release.yaml
+  - helmrelease.yaml
   - grafana-dashboard-configmap.yaml 

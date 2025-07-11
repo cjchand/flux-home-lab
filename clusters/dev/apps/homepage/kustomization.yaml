@@ -4,7 +4,7 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - helm-repository.yaml
-  - helm-release.yaml
+  - helmrelease.yaml
   - pvc.yaml
   - configmap.yaml
   - homepage-traefik-ingress.yaml 
