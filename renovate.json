@@ -3,27 +3,20 @@
   "extends": [
     "config:recommended"
   ],
-  "helm-values": {
-    "enabled": true
+  "flux": {
+    "managerFilePatterns": [
+      "clusters/dev/apps/.*/helmrelease\\.yaml$"
+    ]
   },
   "packageRules": [
     {
       "matchManagers": [
-        "helmfile",
-        "helm-values"
+        "flux"
       ],
       "matchFileNames": [
         "clusters/dev/apps/**/helmrelease.yaml"
       ],
-      "groupName": "HelmRelease updates"
-    },
-    {
-      "matchDatasources": ["docker"],
-      "matchUpdateTypes": ["major", "minor", "patch"],
-      "matchFileNames": [
-        "clusters/dev/apps/**/helmrelease.yaml"
-      ],
-      "groupName": "{{depName}} image updates"
+      "groupName": "HelmRelease and image updates"
     }
   ]
 }
