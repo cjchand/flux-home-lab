@@ -5,7 +5,7 @@
   ],
   "flux": {
     "managerFilePatterns": [
-      "clusters/dev/apps/.*/helmrelease\\.yaml$"
+      "/clusters/dev/apps/.+\\.yaml$/"
     ]
   },
   "packageRules": [
