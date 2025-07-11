@@ -8,10 +8,14 @@
       "/clusters/dev/apps/.+\\.yaml$/"
     ]
   },
+  "helm-values": {
+    "enabled": true
+  },
   "packageRules": [
     {
       "matchManagers": [
-        "flux"
+        "flux",
+        "helm-values"
       ],
       "matchFileNames": [
         "clusters/dev/apps/**/helmrelease.yaml"
