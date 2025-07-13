@@ -14,20 +14,6 @@ spec:
         name: traefik
         namespace: traefik
   values:
-    # Ingress configuration
-    ingressRoute:
-      dashboard:
-        enabled: true
-        ingress:
-          enabled: true
-          ingressClassName: traefik
-          hosts:
-            - traefik-dashboard.internal
-          tls:
-            - secretName: traefik-dashboard-tls
-              hosts:
-                - traefik-dashboard.internal
-
     # Certificate management with Let's Encrypt (v3 format)
     certificatesResolvers:
       letsencrypt:
@@ -66,17 +52,6 @@ spec:
         gethomepage.dev/group: Infrastructure
         gethomepage.dev/name: "Traefik"
         gethomepage.dev/icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Traefik.logo.svg/1200px-Traefik.logo.svg.png"
-
-    # Additional arguments for v3 (updated format)
-    additionalArguments:
-      - "--log.level=INFO"
-      - "--accesslog=true"
-      - "--metrics.prometheus=true"
-      - "--providers.kubernetesingress=true"
-      - "--providers.kubernetescrd=true"
-      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
-      - "--certificatesresolvers.letsencrypt.acme.email=admin@internal"
-      - "--certificatesresolvers.letsencrypt.acme.storage=/data/acme.json"
 
     # Prometheus metrics
     metrics:
