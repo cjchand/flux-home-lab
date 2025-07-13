@@ -8,7 +8,7 @@ spec:
   chart:
     spec:
       chart: traefik
-      version: "24.0.0"
+      version: "36.3.0"
       sourceRef:
         kind: HelmRepository
         name: traefik
@@ -28,12 +28,13 @@ spec:
               hosts:
                 - traefik-dashboard.internal
 
-    # Certificate management with Let's Encrypt
-    certResolver:
+    # Certificate management with Let's Encrypt (v3 format)
+    certificatesResolvers:
       letsencrypt:
-        email: admin@internal
-        storage: /data/acme.json
-        tlsChallenge: {}
+        acme:
+          email: admin@internal
+          storage: /data/acme.json
+          tlsChallenge: {}
 
     # Ingress configuration
     ingressClass:
@@ -66,7 +67,7 @@ spec:
         gethomepage.dev/name: "Traefik"
         gethomepage.dev/icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Traefik.logo.svg/1200px-Traefik.logo.svg.png"
 
-    # Additional arguments for better performance
+    # Additional arguments for v3 (updated format)
     additionalArguments:
       - "--log.level=INFO"
       - "--accesslog=true"
