@@ -24,7 +24,6 @@ spec:
 
     # Ingress configuration
     ingressClass:
-      isDefault: false
       name: traefik
 
     # Persistence for certificates
