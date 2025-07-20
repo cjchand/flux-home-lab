@@ -75,7 +75,7 @@ spec:
       pullSecrets: []
       registry: docker.io
       repository: bitnami/postgresql
-      tag: 14.18.0-debian-12-r0
+      tag: 17.3.0-debian-12-r0
     kubeVersion: ""
     ldap:
       basedn: ""
@@ -436,4 +436,3 @@ spec:
       resources:
         limits: {}
         requests: {}
-
