@@ -9,7 +9,7 @@
 August 28th, 2025 - Bitnami free tier removal
 
 ## Solution
-Deploy separate vanilla PostgreSQL using official images instead of embedded subchart
+Deploy separate vanilla PostgreSQL v17 using official images instead of embedded subchart
 
 ## Migration Steps
 1. Create separate PostgreSQL StatefulSet using official postgres:15-alpine image
