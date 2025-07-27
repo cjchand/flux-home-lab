@@ -104,7 +104,7 @@ spec:
     
     # External database configuration
     externalDatabase:
-      host: tandoor-postgres-postgresql
+      host: tandoor-postgres
       port: 5432
       user: tandoor
       database: tandoor
