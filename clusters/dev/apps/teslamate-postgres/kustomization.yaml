@@ -3,6 +3,6 @@ kind: Kustomization
 
 resources:
   - helmrelease.yaml
-  - source-helmrepo-bitnami.yaml
+  - source-helmrepo-codecentric.yaml
   - teslamate-postgres-helmchart.yaml
   - teslamate-postgres-sealed.yaml 
