@@ -108,8 +108,8 @@ spec:
       port: 5432
       user: tandoor
       database: tandoor
-      existingSecret: tandoor-postgres-secret
-      existingSecretPasswordKey: password
+      existingSecret: tandoor-postgres-password
+      existingSecretPasswordKey: tandoor-postgres-password
 
     podSecurityContext:
       # -- Run as `nobody` user

@@ -28,8 +28,8 @@ spec:
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: tandoor-postgres-secret
-              key: password
+              name: tandoor-postgres-password
+              key: tandoor-postgres-password
         volumeMounts:
         - name: postgres-data
           mountPath: /var/lib/postgresql/data
