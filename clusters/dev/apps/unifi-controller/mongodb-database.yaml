@@ -1,0 +1,71 @@
+---
+apiVersion: mongodbcommunity.mongodb.com/v1
+kind: MongoDBCommunity
+metadata:
+  name: unifi-mongodb
+  namespace: unifi
+spec:
+  members: 1
+  type: ReplicaSet
+  version: "6.0.5"
+  
+  security:
+    authentication:
+      modes: ["SCRAM"]
+  
+  users:
+    - name: unifi
+      db: admin
+      passwordSecretRef:
+        name: unifi-mongodb-secret
+        key: mongodb-password
+      roles:
+        - name: dbOwner
+          db: unifi
+        - name: dbOwner
+          db: unifi_stat
+        - name: dbOwner
+          db: unifi_audit
+      scramCredentialsSecretName: unifi-mongodb-scram
+    
+    - name: root
+      db: admin
+      passwordSecretRef:
+        name: unifi-mongodb-secret
+        key: mongodb-root-password
+      roles:
+        - name: root
+          db: admin
+      scramCredentialsSecretName: unifi-mongodb-root-scram
+  
+  additionalMongodConfig:
+    storage.wiredTiger.engineConfig.journalCompressor: zlib
+    storage.wiredTiger.collectionConfig.blockCompressor: zlib
+    storage.wiredTiger.indexConfig.prefixCompression: true
+  
+  statefulSet:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: mongod
+              resources:
+                requests:
+                  cpu: 250m
+                  memory: 512Mi
+                limits:
+                  cpu: 1000m
+                  memory: 1Gi
+      volumeClaimTemplates:
+        - metadata:
+            name: data-volume
+            annotations:
+              nfs.io/createUID: "2000"
+              nfs.io/createGID: "2000"
+              nfs.io/createMode: "0755"
+          spec:
+            accessModes: ["ReadWriteMany"]
+            storageClassName: "nfs-client"
+            resources:
+              requests:
+                storage: 8Gi
