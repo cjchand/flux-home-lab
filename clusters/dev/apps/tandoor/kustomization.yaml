@@ -4,4 +4,7 @@ kind: Kustomization
 resources:
   - source-helmrepo-gabe565.yaml
   - helmrelease.yaml
+  - postgres-statefulset.yaml
+  - postgres-service.yaml
+  - tandoor-postgres-secret.yaml
   - tandoor-postgres-sealedsecret.yaml 
