@@ -9,7 +9,7 @@ The home lab currently hosts the following applications and services, organized 
 - **[Home Automation](./Home-Automation.md)** - Home Assistant, Homebridge
 
 ## Monitoring & Observability
-- **[Monitoring & Observability](./Monitoring.md)** - Loki Stack, Uptime Kuma, Eero Exporter
+- **[Monitoring & Observability](./Monitoring.md)** - Loki Stack, Uptime Kuma
 
 ## Applications
 
@@ -26,7 +26,6 @@ The home lab currently hosts the following applications and services, organized 
 ### Monitoring & Observability
 - **[Loki Stack](./Monitoring.md#loki-stack)** - Log aggregation and visualization (Grafana + Loki)
 - **[Uptime Kuma](./Monitoring.md#uptime-kuma)** - Uptime monitoring and status page
-- **[Eero Exporter](./Eero-Exporter.md)** - Prometheus exporter for Eero WiFi metrics
 
 ### Applications
 - **[Teslamate](./TeslaMate.md)** - Tesla vehicle data logging and visualization
