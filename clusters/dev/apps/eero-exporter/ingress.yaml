@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: eero-exporter
+  namespace: eero-exporter
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/description: "Eero WiFi Metrics Exporter"
+    gethomepage.dev/group: "Monitoring"
+    gethomepage.dev/name: "Eero Exporter"
+    gethomepage.dev/icon: "https://www.eero.com/favicon.ico"
+spec:
+  ingressClassName: traefik
+  tls:
+    - secretName: eero-exporter-tls
+      hosts:
+        - eero-exporter.internal
+  rules:
+    - host: eero-exporter.internal
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: eero-exporter
+                port:
+                  number: 9118 
