@@ -28,19 +28,12 @@ This directory contains the Flux configuration for deploying a crossplay Minecra
 
 ## Plugin Installation
 
-The server is configured to support plugins. To install GeyserMC and Floodgate:
+The server automatically downloads and installs the required plugins using initContainers:
 
-1. Download the latest JAR files:
-   - GeyserMC: https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot
-   - Floodgate: https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot
+- **GeyserMC**: Automatically downloaded from the official repository
+- **Floodgate**: Automatically downloaded from the official repository
 
-2. Copy the plugins to the server:
-   ```bash
-   kubectl cp geyser-spigot.jar minecraft/minecraft-server-0:/data/plugins/
-   kubectl cp floodgate-spigot.jar minecraft/minecraft-server-0:/data/plugins/
-   ```
-
-3. Restart the server to load the plugins
+The plugins are installed during pod startup and will be available immediately when the server starts. No manual intervention required!
 
 ## Configuration
 
