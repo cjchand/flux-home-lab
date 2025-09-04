@@ -9,3 +9,4 @@ resources:
   - floodgate-config.yaml
   - plugins-list.yaml
   - minecraft-traefik-ingress.yaml
+  - bedrock-service.yaml
