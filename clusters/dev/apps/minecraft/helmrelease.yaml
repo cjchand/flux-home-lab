@@ -26,6 +26,11 @@ spec:
       # Environment variables for plugin download
       extraEnv:
         PLUGINS_FILE: "/data/plugins-list/plugins.txt"
+        ENABLE_RCON: "true"
+        USE_AIKAR_FLAGS: "true"
+        MEMORY: "2G"
+        ENABLE_GEYSER: "true"
+        ENABLE_FLOODGATE: "true"
       # Volume for plugins file
       extraVolumes:
         - volumeMounts:
@@ -62,12 +67,7 @@ spec:
       limits:
         memory: "4Gi"
         cpu: "2000m"
-    env:
-      ENABLE_RCON: "true"
-      USE_AIKAR_FLAGS: "true"
-      MEMORY: "2G"
-      ENABLE_GEYSER: "true"
-      ENABLE_FLOODGATE: "true"
+
     # Server properties for GeyserMC
     serverProperties:
       server-port: 25565
