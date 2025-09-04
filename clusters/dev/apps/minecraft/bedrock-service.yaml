@@ -7,6 +7,7 @@ spec:
   type: LoadBalancer
   selector:
     app: minecraft
+  loadBalancerIP: 192.168.86.202   # Reserved fixed IP from MetalLB pool
   ports:
     - name: bedrock
       protocol: UDP
