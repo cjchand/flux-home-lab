@@ -45,6 +45,7 @@ spec:
       enabled: true
       type: LoadBalancer
       annotations:
+        metallb.universe.tf/address-pool: default
         gethomepage.dev/enabled: "true"
         gethomepage.dev/description: Minecraft Server (Java + Bedrock)
         gethomepage.dev/group: Gaming
@@ -54,7 +55,8 @@ spec:
       - name: bedrock
         containerPort: 19132
         protocol: UDP
-        servicePort: 19132
+        service:
+          port: 19132
     persistence:
       enabled: true
       storageClass: "nfs-client"
