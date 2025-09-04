@@ -23,6 +23,29 @@ spec:
       rcon:
         enabled: true
         password: "minecraft-rcon-password"
+      initContainers:
+        - name: download-geyser
+          image: curlimages/curl:latest
+          command: ["sh", "-c"]
+          args:
+            - |
+              echo "Downloading GeyserMC plugin..."
+              curl -L -o /plugins/geyser-spigot.jar "https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot"
+              echo "GeyserMC download complete"
+          volumeMounts:
+            - name: plugins
+              mountPath: /plugins
+        - name: download-floodgate
+          image: curlimages/curl:latest
+          command: ["sh", "-c"]
+          args:
+            - |
+              echo "Downloading Floodgate plugin..."
+              curl -L -o /plugins/floodgate-spigot.jar "https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot"
+              echo "Floodgate download complete"
+          volumeMounts:
+            - name: plugins
+              mountPath: /plugins
     service:
       enabled: true
       type: LoadBalancer
@@ -62,30 +85,6 @@ spec:
     extraVolumeMounts:
       - name: plugins
         mountPath: /data/plugins
-    # Init containers to download plugins
-    initContainers:
-      - name: download-geyser
-        image: curlimages/curl:latest
-        command: ["sh", "-c"]
-        args:
-          - |
-            echo "Downloading GeyserMC plugin..."
-            curl -L -o /plugins/geyser-spigot.jar "https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot"
-            echo "GeyserMC download complete"
-        volumeMounts:
-          - name: plugins
-            mountPath: /plugins
-      - name: download-floodgate
-        image: curlimages/curl:latest
-        command: ["sh", "-c"]
-        args:
-          - |
-            echo "Downloading Floodgate plugin..."
-            curl -L -o /plugins/floodgate-spigot.jar "https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot"
-            echo "Floodgate download complete"
-        volumeMounts:
-          - name: plugins
-            mountPath: /plugins
     # Server properties for GeyserMC
     serverProperties:
       server-port: 25565
