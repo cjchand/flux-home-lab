@@ -25,13 +25,17 @@ spec:
         password: "minecraft-rcon-password"
       # Environment variables for plugin download
       extraEnv:
-        - name: PLUGINS_FILE
-          value: "/plugins-list/plugins.txt"
-      # Volume mounts for plugins file
-      extraVolumeMounts:
-        - name: plugins-list
-          mountPath: /plugins-list
-          readOnly: true
+        PLUGINS_FILE: "/data/plugins-list/plugins.txt"
+      # Volume for plugins file
+      extraVolumes:
+        - volumeMounts:
+            - name: plugins-list
+              mountPath: /data/plugins-list
+              readOnly: true
+        - volumes:
+          - name: plugins-list
+            configMap:
+              name: minecraft-plugins-list
     service:
       enabled: true
       type: LoadBalancer
@@ -64,11 +68,6 @@ spec:
       MEMORY: "2G"
       ENABLE_GEYSER: "true"
       ENABLE_FLOODGATE: "true"
-    # Define volumes for plugins file
-    volumes:
-      - name: plugins-list
-        configMap:
-          name: minecraft-plugins-list
     # Server properties for GeyserMC
     serverProperties:
       server-port: 25565
