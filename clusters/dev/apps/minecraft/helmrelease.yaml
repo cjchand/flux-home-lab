@@ -20,15 +20,23 @@ spec:
       eula: true
       type: PAPER
       version: "1.20.1"
-      serviceType: LoadBalancer
       rcon:
         enabled: true
         password: "minecraft-rcon-password"
-      extraPorts:
-        - name: bedrock
-          containerPort: 19132
-          protocol: UDP
-          servicePort: 19132
+    service:
+      enabled: true
+      type: LoadBalancer
+      annotations:
+        gethomepage.dev/enabled: "true"
+        gethomepage.dev/description: Minecraft Server (Java + Bedrock)
+        gethomepage.dev/group: Gaming
+        gethomepage.dev/name: "Minecraft Server"
+        gethomepage.dev/icon: "https://www.minecraft.net/content/dam/games/minecraft/key-art/MC_Java_KeyArt_600x300.jpg"
+    extraPorts:
+      - name: bedrock
+        containerPort: 19132
+        protocol: UDP
+        servicePort: 19132
     persistence:
       enabled: true
       storageClass: "nfs-client"
@@ -47,15 +55,6 @@ spec:
       MEMORY: "2G"
       ENABLE_GEYSER: "true"
       ENABLE_FLOODGATE: "true"
-    service:
-      enabled: true
-      type: LoadBalancer
-      annotations:
-        gethomepage.dev/enabled: "true"
-        gethomepage.dev/description: Minecraft Server (Java + Bedrock)
-        gethomepage.dev/group: Gaming
-        gethomepage.dev/name: "Minecraft Server"
-        gethomepage.dev/icon: "https://www.minecraft.net/content/dam/games/minecraft/key-art/MC_Java_KeyArt_600x300.jpg"
     # Enable plugin mounting
     extraVolumes:
       - name: plugins
