@@ -16,6 +16,13 @@ spec:
   values:
     image:
       tag: latest
+    extraEnv:
+        PLUGINS_FILE: "/data/plugins-list/plugins.txt"
+        ENABLE_RCON: "true"
+        USE_AIKAR_FLAGS: "true"
+        MEMORY: "2G"
+        ENABLE_GEYSER: "true"
+        ENABLE_FLOODGATE: "true"
     minecraftServer:
       eula: true
       type: PAPER
@@ -23,24 +30,16 @@ spec:
       rcon:
         enabled: true
         password: "minecraft-rcon-password"
-      # Environment variables for plugin download
-      extraEnv:
-        PLUGINS_FILE: "/data/plugins-list/plugins.txt"
-        ENABLE_RCON: "true"
-        USE_AIKAR_FLAGS: "true"
-        MEMORY: "2G"
-        ENABLE_GEYSER: "true"
-        ENABLE_FLOODGATE: "true"
       # Volume for plugins file
-      extraVolumes:
-        - volumeMounts:
-            - name: plugins-list
-              mountPath: /data/plugins-list
-              readOnly: true
-        - volumes:
+    extraVolumes:
+      - volumeMounts:
           - name: plugins-list
-            configMap:
-              name: minecraft-plugins-list
+            mountPath: /data/plugins-list
+            readOnly: true
+      - volumes:
+        - name: plugins-list
+          configMap:
+            name: minecraft-plugins-list
     service:
       enabled: true
       type: LoadBalancer
