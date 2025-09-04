@@ -1,0 +1,35 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: minecraft-server
+  namespace: minecraft
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/description: Minecraft Server (Java + Bedrock)
+    gethomepage.dev/group: Gaming
+    gethomepage.dev/name: "Minecraft Server"
+    gethomepage.dev/icon: "https://www.minecraft.net/content/dam/games/minecraft/key-art/MC_Java_KeyArt_600x300.jpg"
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`minecraft.internal`)
+      kind: Rule
+      services:
+        - name: minecraft-server
+          port: 25565
+  tls:
+    secretName: minecraft-tls
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteUDP
+metadata:
+  name: minecraft-bedrock
+  namespace: minecraft
+spec:
+  entryPoints:
+    - minecraft-bedrock
+  routes:
+    - services:
+        - name: minecraft-server
+          port: 19132
