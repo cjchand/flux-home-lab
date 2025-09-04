@@ -55,8 +55,6 @@ spec:
       - name: bedrock
         containerPort: 19132
         protocol: UDP
-        service:
-          port: 19132
     persistence:
       enabled: true
       storageClass: "nfs-client"
