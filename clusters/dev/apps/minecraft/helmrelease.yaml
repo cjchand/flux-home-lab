@@ -55,9 +55,17 @@ spec:
       MEMORY: "2G"
       ENABLE_GEYSER: "true"
       ENABLE_FLOODGATE: "true"
-      # Download plugins automatically
-      DOWNLOAD_PLUGINS: "true"
-      PLUGINS: "https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot,https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot"
+      # Download plugins automatically using plugins file
+      PLUGINS_FILE: "/plugins-list/plugins.txt"
+    # Mount plugins list file
+    extraVolumes:
+      - name: plugins-list
+        configMap:
+          name: minecraft-plugins-list
+    extraVolumeMounts:
+      - name: plugins-list
+        mountPath: /plugins-list
+        readOnly: true
     # Server properties for GeyserMC
     serverProperties:
       server-port: 25565

@@ -7,4 +7,5 @@ resources:
   - helmrelease.yaml
   - geyser-config.yaml
   - floodgate-config.yaml
+  - plugins-list.yaml
   - minecraft-traefik-ingress.yaml
