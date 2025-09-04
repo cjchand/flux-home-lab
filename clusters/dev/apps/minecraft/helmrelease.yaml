@@ -55,21 +55,9 @@ spec:
       MEMORY: "2G"
       ENABLE_GEYSER: "true"
       ENABLE_FLOODGATE: "true"
-    # Use custom startup script and plugin mounting
-    extraVolumes:
-      - name: startup-script
-        configMap:
-          name: minecraft-startup-script
-          defaultMode: 0755
-      - name: plugins
-        emptyDir: {}
-    extraVolumeMounts:
-      - name: startup-script
-        mountPath: /startup-script
-      - name: plugins
-        mountPath: /data/plugins
-    # Override the startup command
-    command: ["/bin/bash", "/startup-script/startup.sh"]
+      # Download plugins automatically
+      DOWNLOAD_PLUGINS: "true"
+      PLUGINS: "https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot,https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot"
     # Server properties for GeyserMC
     serverProperties:
       server-port: 25565
