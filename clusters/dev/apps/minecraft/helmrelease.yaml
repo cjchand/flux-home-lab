@@ -23,6 +23,7 @@ spec:
         MEMORY: "2G"
         ENABLE_GEYSER: "true"
         ENABLE_FLOODGATE: "true"
+        FOO: "bar"
     minecraftServer:
       eula: true
       type: PAPER
