@@ -48,6 +48,7 @@ spec:
       ENABLE_GEYSER: "true"
       ENABLE_FLOODGATE: "true"
     service:
+      enabled: true
       type: LoadBalancer
       annotations:
         gethomepage.dev/enabled: "true"
