@@ -7,3 +7,4 @@ resources:
   - service-java.yaml
   - service-bedrock.yaml
   - helmrepository.yaml
+  - namespace.yaml
