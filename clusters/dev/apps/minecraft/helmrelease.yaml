@@ -43,7 +43,7 @@ spec:
             name: minecraft-plugins-list
     service:
       enabled: true
-      type: NodePort
+      type: LoadBalancer
       annotations:
         gethomepage.dev/enabled: "true"
         gethomepage.dev/description: Minecraft Server (Java + Bedrock)
@@ -54,6 +54,9 @@ spec:
       - name: bedrock
         containerPort: 19132
         protocol: UDP
+        service:
+          enabled: true
+          type: NodePort
     persistence:
       enabled: true
       storageClass: "nfs-client"
