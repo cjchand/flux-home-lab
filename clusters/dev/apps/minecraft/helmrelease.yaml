@@ -12,7 +12,7 @@ spec:
       sourceRef:
         kind: HelmRepository
         name: itzg
-        namespace: flux-system
+        namespace: minecraft
   values:
     EULA: "TRUE"
     TYPE: "PAPER"
