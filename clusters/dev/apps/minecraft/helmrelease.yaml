@@ -43,9 +43,8 @@ spec:
             name: minecraft-plugins-list
     service:
       enabled: true
-      type: LoadBalancer
+      type: NodePort
       annotations:
-        metallb.universe.tf/address-pool: default
         gethomepage.dev/enabled: "true"
         gethomepage.dev/description: Minecraft Server (Java + Bedrock)
         gethomepage.dev/group: Gaming
@@ -67,6 +66,16 @@ spec:
       limits:
         memory: "4Gi"
         cpu: "2000m"
+    # Pin to specific node for NodePort access
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - microk8s-node-01
 
     # Server properties for GeyserMC
     serverProperties:

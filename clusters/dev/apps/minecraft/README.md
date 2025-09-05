@@ -23,10 +23,10 @@ This directory contains the Flux configuration for deploying a crossplay Minecra
 ## Access
 
 - **Java Clients**: Connect to `minecraft.internal:25565` (via Traefik ingress)
-- **Bedrock Clients**: Connect to `<LoadBalancer-IP>:19132` (direct LoadBalancer access)
-- **RCON**: Available on `<LoadBalancer-IP>:25575` for server administration
+- **Bedrock Clients**: Connect to `<microk8s-node-01-IP>:19132` (NodePort UDP access)
+- **RCON**: Available on `<microk8s-node-01-IP>:<NodePort>` for server administration
 
-**Note**: Bedrock Edition requires UDP support, which Traefik doesn't provide. Bedrock clients must connect directly to the LoadBalancer IP address on port 19132.
+**Note**: The server is pinned to `microk8s-node-01` for consistent NodePort access. Bedrock Edition uses UDP port 19132 on the node's IP address.
 
 ## Plugin Installation
 
