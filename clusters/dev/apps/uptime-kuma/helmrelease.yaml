@@ -16,6 +16,9 @@ spec:
         namespace: monitoring
   releaseName: uptime-kuma
   values:
+    image:
+      repository: louislam/uptime-kuma
+      tag: "2.0.2"
     useDeploy: false
     ingress:
       enabled: true
