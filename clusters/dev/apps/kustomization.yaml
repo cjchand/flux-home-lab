@@ -7,7 +7,6 @@ resources:
   - homepage/
   - loki-stack/
   - metallb/
-  - minecraft/
   - tandoor/
   - teslamate/
   - traefik/
