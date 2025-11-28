@@ -16,6 +16,9 @@ spec:
         namespace: monitoring
   releaseName: uptime-kuma
   values:
+    image:
+      repository: louislam/uptime-kuma
+      tag: "1.23.17-alpine"
     useDeploy: false
     ingress:
       enabled: true
