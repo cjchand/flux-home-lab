@@ -14,6 +14,24 @@ spec:
         name: gabe565
   interval: 1h
   releaseName: tandoor
+  # Patch to add emptyDir volume at /run for Gunicorn socket
+  # Fix for Tandoor 2.3.3+ Gunicorn socket permission issue
+  # See: https://github.com/TandoorRecipes/recipes/issues/4209
+  patches:
+    - patch: |
+        - op: add
+          path: /spec/template/spec/volumes/-
+          value:
+            name: run-socket
+            emptyDir: {}
+        - op: add
+          path: /spec/template/spec/containers/0/volumeMounts/-
+          value:
+            name: run-socket
+            mountPath: /run
+      target:
+        kind: Deployment
+        name: tandoor
   values:
     #
     # IMPORTANT NOTE
@@ -96,6 +114,12 @@ spec:
         enabled: true
         type: emptyDir
         mountPath: /opt/recipes/cookbook/static/django_js_reverse
+      # Fix for Tandoor 2.3.3+ Gunicorn socket permission issue
+      # See: https://github.com/TandoorRecipes/recipes/issues/4209
+      run:
+        enabled: true
+        type: emptyDir
+        mountPath: /run
 
     # -- Enable and configure postgresql database subchart under this key. [[ref]](https://github.com/bitnami/charts/tree/master/bitnami/mariadb)
     # @default -- See [values.yaml](./values.yaml)
@@ -117,15 +141,3 @@ spec:
       runAsGroup: 65534
       # -- Volume binds will be granted to `nobody` group
       fsGroup: 65534
-
-    # -- Extra volumes to mount in the pod
-    # Fix for Tandoor 2.3.3+ Gunicorn socket permission issue
-    # See: https://github.com/TandoorRecipes/recipes/issues/4209
-    extraVolumes:
-      - name: run-socket
-        emptyDir: {}
-
-    # -- Extra volume mounts to add to the main container
-    extraVolumeMounts:
-      - name: run-socket
-        mountPath: /run
