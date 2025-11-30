@@ -117,3 +117,15 @@ spec:
       runAsGroup: 65534
       # -- Volume binds will be granted to `nobody` group
       fsGroup: 65534
+
+    # -- Extra volumes to mount in the pod
+    # Fix for Tandoor 2.3.3+ Gunicorn socket permission issue
+    # See: https://github.com/TandoorRecipes/recipes/issues/4209
+    extraVolumes:
+      - name: run-socket
+        emptyDir: {}
+
+    # -- Extra volume mounts to add to the main container
+    extraVolumeMounts:
+      - name: run-socket
+        mountPath: /run
