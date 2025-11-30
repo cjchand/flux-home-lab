@@ -5,5 +5,4 @@ metadata:
 spec:
   ca:
     secretName: home-lab-internal-ca
-    secretNamespace: traefik
 
