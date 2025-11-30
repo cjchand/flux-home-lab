@@ -15,6 +15,8 @@ spec:
         namespace: traefik
   values:
     # Certificate management with Let's Encrypt (v3 format)
+    # Note: Currently using self-signed certificates for .internal domains
+    # Let's Encrypt configuration kept for future use with real domains
     certificatesResolvers:
       letsencrypt:
         acme:

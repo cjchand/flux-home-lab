@@ -29,6 +29,9 @@ spec:
         enabled: true
         ingressClassName: traefik
         annotations:
+          traefik.ingress.kubernetes.io/router.entrypoints: websecure
+          traefik.ingress.kubernetes.io/router.tls: "true"
+          cert-manager.io/cluster-issuer: internal-ca
           gethomepage.dev/enabled: "true"
           gethomepage.dev/description: Teslamate Core
           gethomepage.dev/group: Lifestyle
@@ -41,6 +44,10 @@ spec:
                 pathType: Prefix
                 service:
                   port: 4000
+        tls:
+          - hosts:
+              - teslamate.internal
+            secretName: teslamate-tls
     env:
       - name: TZ 
         value: UTC

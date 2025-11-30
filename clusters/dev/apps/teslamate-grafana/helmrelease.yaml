@@ -32,6 +32,9 @@ spec:
       enabled: true
       ingressClassName: traefik
       annotations:
+        traefik.ingress.kubernetes.io/router.entrypoints: websecure
+        traefik.ingress.kubernetes.io/router.tls: "true"
+        cert-manager.io/cluster-issuer: internal-ca
         external-dns.alpha.kubernetes.io/target: 192.168.86.31
         gethomepage.dev/enabled: "true"
         gethomepage.dev/description: Teslamate Grafana
@@ -41,6 +44,10 @@ spec:
       path: /
       hosts:
         - teslamate-grafana.internal
+      tls:
+        - hosts:
+            - teslamate-grafana.internal
+          secretName: teslamate-grafana-tls
     env:
       DATABASE_HOST: teslamate-postgres-nfs-postgresql
       DATABASE_PORT: 5432

@@ -79,9 +79,11 @@ spec:
     ingress:
       main:
         enabled: true
-        ingressClassName: "public"
+        ingressClassName: traefik
         annotations:
-          cert-manager.io/cluster-issuer: letsencrypt-prod
+          traefik.ingress.kubernetes.io/router.entrypoints: websecure
+          traefik.ingress.kubernetes.io/router.tls: "true"
+          cert-manager.io/cluster-issuer: internal-ca
           gethomepage.dev/enabled: "true"
         hosts:
           - host: unifi.internal
@@ -89,9 +91,9 @@ spec:
               - path: /
                 pathType: Prefix
         tls:
-          - secretName: unifi-tls
-            hosts:
+          - hosts:
               - unifi.internal
+            secretName: unifi-tls
 
     hostNetwork: true
     dnsPolicy: ClusterFirstWithHostNet

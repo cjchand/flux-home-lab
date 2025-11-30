@@ -6,3 +6,7 @@ resources:
   - sealed-secrets-helmrelease.yaml
   - source-helmrepo-nfs-external-provisioner.yaml
   - source-helmrepo-sealed-secrets.yaml
+  - cert-manager-namespace.yaml
+  - cert-manager-helmrelease.yaml
+  - source-helmrepo-cert-manager.yaml
+  - internal-ca-issuer.yaml

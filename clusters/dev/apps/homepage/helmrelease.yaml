@@ -52,15 +52,19 @@ spec:
     ingress:
       enabled: true
       ingressClassName: traefik
+      annotations:
+        traefik.ingress.kubernetes.io/router.entrypoints: websecure
+        traefik.ingress.kubernetes.io/router.tls: "true"
+        cert-manager.io/cluster-issuer: internal-ca
       hosts:
         - host: homepage.internal
           paths:
             - path: /
               pathType: Prefix
       tls:
-        - secretName: homepage-tls
-          hosts:
-            - homepage.internal 
+        - hosts:
+            - homepage.internal
+          secretName: homepage-tls 
 
     rbac:
       enabled: true

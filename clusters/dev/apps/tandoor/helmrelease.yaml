@@ -81,6 +81,9 @@ spec:
         enabled: true
         ingressClassName: traefik
         annotations:
+          traefik.ingress.kubernetes.io/router.entrypoints: websecure
+          traefik.ingress.kubernetes.io/router.tls: "true"
+          cert-manager.io/cluster-issuer: internal-ca
           gethomepage.dev/enabled: "true"
           gethomepage.dev/description: Tandoor Recipes
           gethomepage.dev/group: Lifestyle
@@ -96,6 +99,10 @@ spec:
               - path: /media
                 service:
                   port: 80
+        tls:
+          - hosts:
+              - recipes.internal
+            secretName: tandoor-tls
 
     # -- Configure persistence settings for the chart under this key.
     # @default -- See [values.yaml](./values.yaml)
