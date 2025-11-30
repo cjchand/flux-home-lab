@@ -51,8 +51,11 @@ kubectl get pods -n cert-manager
 # Check HelmRelease status
 kubectl get helmrelease cert-manager -n flux-system
 
-# Check ClusterIssuer
-kubectl get clusterissuer internal-ca
+# Wait for cert-manager pods to be ready
+kubectl wait --for=condition=ready pod \
+  -l app.kubernetes.io/name=cert-manager \
+  -n cert-manager \
+  --timeout=300s
 ```
 
 Expected output:
@@ -63,7 +66,29 @@ cert-manager-cainjector-xxx   1/1     Running   0         2m
 cert-manager-webhook-xxx   1/1     Running   0         2m
 ```
 
-### Step 3: Verify ClusterIssuer
+**Important**: The ClusterIssuer is not included in the initial kustomization because it requires cert-manager CRDs to exist first. You'll apply it in the next step.
+
+### Step 3: Apply ClusterIssuer
+
+Once cert-manager is installed and ready, apply the ClusterIssuer:
+
+**Option A: Using the helper script (Recommended)**
+```bash
+./scripts/apply-cluster-issuer.sh
+```
+
+This script will:
+- Wait for cert-manager CRDs to be available
+- Wait for cert-manager pods to be ready
+- Verify the CA secret exists
+- Apply the ClusterIssuer
+
+**Option B: Manual application**
+```bash
+kubectl apply -f clusters/dev/cluster-services/internal-ca-issuer.yaml
+```
+
+### Step 4: Verify ClusterIssuer
 
 Once cert-manager is installed, verify the ClusterIssuer is ready:
 
@@ -80,7 +105,7 @@ status:
     type: Ready
 ```
 
-### Step 4: Add CA to Your Trust Store
+### Step 5: Add CA to Your Trust Store
 
 Export and trust the CA certificate on your devices:
 
@@ -126,7 +151,7 @@ sudo update-ca-certificates
 3. Select the CA certificate file
 4. Check "Trust this CA to identify websites" → OK
 
-### Step 5: Monitor Certificate Generation
+### Step 6: Monitor Certificate Generation
 
 After services are updated, cert-manager will automatically create certificates:
 
@@ -261,10 +286,26 @@ All ingress resources have been updated with:
 1. ✅ Generate CA certificate: `./scripts/generate-internal-ca.sh`
 2. ✅ Commit and push changes (Flux will install cert-manager)
 3. ✅ Wait for cert-manager installation (~2-5 minutes)
-4. ✅ Verify ClusterIssuer is ready
-5. ✅ Add CA to your trust store (see Step 4 above)
-6. ✅ Monitor certificate generation
-7. ✅ Test services - they should work without browser warnings!
+4. ✅ Apply ClusterIssuer: `./scripts/apply-cluster-issuer.sh`
+5. ✅ Verify ClusterIssuer is ready
+6. ✅ Add CA to your trust store (see Step 5 above)
+7. ✅ Monitor certificate generation
+8. ✅ Test services - they should work without browser warnings!
+
+## Troubleshooting
+
+### ClusterIssuer Error: "no matches for kind ClusterIssuer"
+
+This error occurs if you try to apply the ClusterIssuer before cert-manager is installed. The ClusterIssuer is intentionally excluded from the initial kustomization for this reason.
+
+**Solution**: Wait for cert-manager to install first, then apply the ClusterIssuer:
+```bash
+# Wait for cert-manager CRDs
+kubectl wait --for=condition=established crd/clusterissuers.cert-manager.io --timeout=300s
+
+# Then apply ClusterIssuer
+./scripts/apply-cluster-issuer.sh
+```
 
 ## Security Notes
 
