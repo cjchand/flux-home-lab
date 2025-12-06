@@ -54,6 +54,16 @@ spec:
         gethomepage.dev/name: "Traefik"
         gethomepage.dev/icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Traefik.logo.svg/1200px-Traefik.logo.svg.png"
 
+    # Entrypoints configuration for HTTP->HTTPS redirect
+    entryPoints:
+      web:
+        http:
+          redirections:
+            entrypoint:
+              to: websecure
+              scheme: https
+              permanent: true
+
     # Prometheus metrics
     metrics:
       prometheus:
