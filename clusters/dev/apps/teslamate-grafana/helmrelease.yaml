@@ -17,7 +17,7 @@ spec:
   values:
     image:
       repository: teslamate/grafana
-      tag: "2.1"
+      tag: "2.2"
       pullPolicy: IfNotPresent
     persistence:
       type: pvc
