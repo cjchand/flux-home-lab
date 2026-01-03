@@ -1,0 +1,23 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: PostgresCluster
+metadata:
+  name: piped-postgresql
+  namespace: piped
+spec:
+  instances: 1
+  postgresVersion: 15
+  storage:
+    size: 8Gi
+    storageClassName: nfs-client
+  bootstrap:
+    initdb:
+      database: piped
+      username: piped
+  users:
+    - name: piped
+      password:
+        secretName: piped-postgres
+        secretKey: password
+  superuser:
+    secretName: piped-postgres
+    secretKey: postgres-password
