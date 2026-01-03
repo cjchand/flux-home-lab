@@ -5,6 +5,6 @@ resources:
   - namespace.yaml
   - source-helmrepo-piped.yaml
   - piped-postgres-sealedsecret.yaml
-  - piped-postgres-cluster.yaml
+  # - piped-postgres-cluster.yaml
   - helmrelease.yaml
 
