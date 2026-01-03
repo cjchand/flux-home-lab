@@ -42,10 +42,16 @@ spec:
 
     backend:
       enabled: true
-      env:
-        PIPED_FRONTEND_URL: https://piped.internal
+      config:
+        FRONTEND_URL: https://piped.internal
         DISABLE_REGISTRATION: "true"
         SPONSORBLOCK_ENABLED: "true"
+        database:
+          connection_url: jdbc:postgresql://piped-postgresql:5432/piped
+          driver_class: org.postgresql.Driver
+          dialect: org.hibernate.dialect.PostgreSQLDialect
+          secret:
+            name: piped-postgres
 
     proxy:
       enabled: true
