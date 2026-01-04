@@ -1,5 +1,5 @@
 apiVersion: postgresql.cnpg.io/v1
-kind: PostgresCluster
+kind: Cluster
 metadata:
   name: piped-postgresql
   namespace: piped
