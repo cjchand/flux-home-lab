@@ -41,15 +41,15 @@ spec:
       - name: CODER_PG_CONNECTION_URL
         valueFrom:
           secretKeyRef:
-            name: coder-postgres-conn
-            key: connection_url
+            name: coder-postgres
+            key: url
 
     # Database/secret settings: operator-provisioned Postgres will create a
     # secret named `coder-postgres` in the `coder` namespace. Ensure the chart
     # reads the DB connection from these values or via an existing secret.
-    database:
-      host: coder-postgresql-rw
-      port: 5432
-      name: coder
-      user: coder
-      existingSecret: coder-postgres
+    # database:
+    #   host: coder-postgresql-rw
+    #   port: 5432
+    #   name: coder
+    #   user: coder
+    #   existingSecret: coder-postgres
