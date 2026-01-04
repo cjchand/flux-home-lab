@@ -15,41 +15,32 @@ spec:
         namespace: coder
       interval: 12h
   values:
-    # Expose via Traefik using the repo's internal CA
-    ingress:
-      enabled: true
-      ingressClassName: traefik
-      annotations:
-        traefik.ingress.kubernetes.io/router.entrypoints: websecure
-        traefik.ingress.kubernetes.io/router.tls: "true"
-        cert-manager.io/cluster-issuer: internal-ca
-      hosts:
-        - host: coder.internal
-          paths:
-            - /
-      tls:
-        - hosts:
-            - coder.internal
-          hostSecretName: coder-tls
+    coder: 
+      # Expose via Traefik using the repo's internal CA
+      ingress:
+        enabled: true
+        ingressClassName: traefik
+        annotations:
+          traefik.ingress.kubernetes.io/router.entrypoints: websecure
+          traefik.ingress.kubernetes.io/router.tls: "true"
+          cert-manager.io/cluster-issuer: internal-ca
+        hosts:
+          - host: coder.internal
+            paths:
+              - /
+        tls:
+          - hosts:
+              - coder.internal
+            hostSecretName: coder-tls
 
-    service:
-      type: ClusterIP
+      service:
+        type: ClusterIP
 
-    env:
-      - name: CODER_ACCESS_URL
-        value: https://coder.internal
-      - name: CODER_PG_CONNECTION_URL
-        valueFrom:
-          secretKeyRef:
-            name: coder-postgres
-            key: url
-
-    # Database/secret settings: operator-provisioned Postgres will create a
-    # secret named `coder-postgres` in the `coder` namespace. Ensure the chart
-    # reads the DB connection from these values or via an existing secret.
-    # database:
-    #   host: coder-postgresql-rw
-    #   port: 5432
-    #   name: coder
-    #   user: coder
-    #   existingSecret: coder-postgres
+      env:
+        - name: CODER_ACCESS_URL
+          value: https://coder.internal
+        - name: CODER_PG_CONNECTION_URL
+          valueFrom:
+            secretKeyRef:
+              name: coder-postgres
+              key: url
