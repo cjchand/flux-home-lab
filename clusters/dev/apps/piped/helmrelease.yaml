@@ -47,7 +47,7 @@ spec:
         DISABLE_REGISTRATION: "true"
         SPONSORBLOCK_ENABLED: "true"
         database:
-          connection_url: jdbc:postgresql://piped-postgresql:5432/piped
+          connection_url: jdbc:postgresql://piped-postgresql-rw:5432/piped
           driver_class: org.postgresql.Driver
           dialect: org.hibernate.dialect.PostgreSQLDialect
           secret:
