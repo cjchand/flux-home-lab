@@ -29,9 +29,10 @@ spec:
             paths:
               - /
         tls:
-          - hosts:
-              - coder.internal
-            hostSecretName: coder-tls
+          enable: true
+          hosts:
+            - coder.internal
+          hostSecretName: coder-tls
 
       service:
         type: ClusterIP
