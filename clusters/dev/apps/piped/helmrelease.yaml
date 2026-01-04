@@ -41,9 +41,9 @@ spec:
         FRONTEND_URL: https://piped.internal
         PORT: "8080"
       service:
-        main:
+        enabled: true
+        primary:
           enabled: true
-          primary: true
           type: ClusterIP
           ports:
             http:
