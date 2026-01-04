@@ -13,7 +13,7 @@ spec:
   bootstrap:
     initdb:
       database: piped
-      username: piped
+      owner: piped
       secret:
         name: piped-postgres
   # Note: `users` managed via bootstrap.initdb.secret; operator will use the
