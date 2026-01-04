@@ -9,7 +9,7 @@ spec:
     version: 15
   storage:
     size: 8Gi
-    storageClassName: nfs-client
+    storageClass: nfs-client
   bootstrap:
     initdb:
       database: piped
