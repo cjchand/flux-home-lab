@@ -41,16 +41,15 @@ spec:
         FRONTEND_URL: https://piped.internal
         PORT: "8080"
       service:
-        main:
-          enabled: true
-          primary: true
-          type: ClusterIP
-          ports:
-            http:
-              enabled: true
-              primary: true
-              port: 8080
-              protocol: HTTP
+        enabled: true
+        primary: true
+        type: ClusterIP
+        ports:
+          http:
+            enabled: true
+            primary: true
+            port: 8080
+            protocol: HTTP
     backend:
       enabled: true
       config:
