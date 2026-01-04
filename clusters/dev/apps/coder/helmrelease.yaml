@@ -24,14 +24,9 @@ spec:
           traefik.ingress.kubernetes.io/router.entrypoints: websecure
           traefik.ingress.kubernetes.io/router.tls: "true"
           cert-manager.io/cluster-issuer: internal-ca
-        hosts:
-          - host: coder.internal
-            paths:
-              - /
+        host: coder.internal
         tls:
           enable: true
-          hosts:
-            - coder.internal
           hostSecretName: coder-tls
 
       service:
