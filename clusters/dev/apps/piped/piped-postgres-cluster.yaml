@@ -5,7 +5,8 @@ metadata:
   namespace: piped
 spec:
   instances: 1
-  postgresVersion: 15
+  postgresql:
+    version: 15
   storage:
     size: 8Gi
     storageClassName: nfs-client
@@ -18,6 +19,7 @@ spec:
       password:
         secretName: piped-postgres
         secretKey: password
-  superuser:
-    secretName: piped-postgres
-    secretKey: postgres-password
+  # Note: `superuser` removed — CloudNativePG Cluster CRD may not accept this field.
+  # If you need to set the superuser password explicitly, add it according to
+  # the installed CRD schema (inspect with
+  # `kubectl get crd clusters.postgresql.cnpg.io -o yaml`).
