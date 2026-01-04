@@ -14,12 +14,7 @@ spec:
     initdb:
       database: piped
       username: piped
-  users:
-    - name: piped
-      password:
-        secretName: piped-postgres
-        secretKey: password
-  # Note: `superuser` removed — CloudNativePG Cluster CRD may not accept this field.
-  # If you need to set the superuser password explicitly, add it according to
-  # the installed CRD schema (inspect with
-  # `kubectl get crd clusters.postgresql.cnpg.io -o yaml`).
+      secret:
+        name: piped-postgres
+  # Note: `users` managed via bootstrap.initdb.secret; operator will use the
+  # secret named above to create the initial user and database.
