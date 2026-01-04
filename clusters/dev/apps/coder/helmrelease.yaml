@@ -18,8 +18,8 @@ spec:
     coder: 
       # Expose via Traefik using the repo's internal CA
       ingress:
-        enabled: true
-        ingressClassName: traefik
+        enable: true
+        className: traefik
         annotations:
           traefik.ingress.kubernetes.io/router.entrypoints: websecure
           traefik.ingress.kubernetes.io/router.tls: "true"
@@ -44,3 +44,4 @@ spec:
             secretKeyRef:
               name: coder-postgres
               key: url
+ 
