@@ -30,7 +30,7 @@ spec:
       tls:
         - hosts:
             - coder.internal
-          secretName: coder-tls
+          hostSecretName: coder-tls
 
     service:
       type: ClusterIP
