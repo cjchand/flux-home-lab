@@ -42,15 +42,13 @@ spec:
         PORT: "8080"
       service:
         enabled: true
-        primary:
-          enabled: true
-          type: ClusterIP
-          ports:
-            http:
-              enabled: true
-              primary: true
-              port: 8080
-              protocol: HTTP
+        type: ClusterIP
+        ports:
+          http:
+            enabled: true
+            primary: true
+            port: 8080
+            protocol: HTTP
     backend:
       enabled: true
       config:
