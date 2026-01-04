@@ -27,7 +27,7 @@ spec:
         host: coder.internal
         tls:
           enable: true
-          hostSecretName: coder-tls
+          secretName: coder-tls
 
       service:
         type: ClusterIP
