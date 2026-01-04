@@ -39,7 +39,7 @@ spec:
             secretName: piped-tls
       env:
         FRONTEND_URL: https://piped.internal
-        PORT: "8080"
+        PORT: 8080
       service:
         primary:
           enabled: true
