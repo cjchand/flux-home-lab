@@ -1,0 +1,55 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: coder
+  namespace: coder
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: coder
+      sourceRef:
+        kind: HelmRepository
+        name: coder
+        namespace: coder
+      interval: 12h
+  values:
+    # Expose via Traefik using the repo's internal CA
+    ingress:
+      enabled: true
+      ingressClassName: traefik
+      annotations:
+        traefik.ingress.kubernetes.io/router.entrypoints: websecure
+        traefik.ingress.kubernetes.io/router.tls: "true"
+        cert-manager.io/cluster-issuer: internal-ca
+      hosts:
+        - host: coder.internal
+          paths:
+            - /
+      tls:
+        - hosts:
+            - coder.internal
+          secretName: coder-tls
+
+    service:
+      type: ClusterIP
+
+    env:
+      - name: CODER_ACCESS_URL
+        value: https://coder.internal
+      - name: CODER_PG_CONNECTION_URL
+        valueFrom:
+          secretKeyRef:
+            name: coder-postgres-conn
+            key: connection_url
+
+    # Database/secret settings: operator-provisioned Postgres will create a
+    # secret named `coder-postgres` in the `coder` namespace. Ensure the chart
+    # reads the DB connection from these values or via an existing secret.
+    database:
+      host: coder-postgresql-rw
+      port: 5432
+      name: coder
+      user: coder
+      existingSecret: coder-postgres

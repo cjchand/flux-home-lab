@@ -1,0 +1,17 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: coder-postgresql
+  namespace: coder
+spec:
+  instances: 1
+  storage:
+    size: 8Gi
+    storageClass: nfs-client
+  bootstrap:
+    initdb:
+      database: coder
+      owner: coder
+      secret:
+        name: coder-postgres
+  # Note: initial user/database created from the secret named above.

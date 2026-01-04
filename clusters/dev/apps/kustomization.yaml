@@ -8,6 +8,7 @@ resources:
   - loki-stack/
   - metallb/
   - piped/
+  - coder/
   - tandoor/
   - teslamate/
   - traefik/
