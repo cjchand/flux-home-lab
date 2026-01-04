@@ -17,10 +17,6 @@ spec:
   values:
     frontend:
       enabled: true
-      containerSecurityContext:
-        capabilities:
-          add:
-            - NET_BIND_SERVICE
       ingress:
         enabled: true
         ingressClassName: traefik
@@ -43,6 +39,10 @@ spec:
             secretName: piped-tls
       env:
         FRONTEND_URL: https://piped.internal
+        PORT: "8080"
+      service:
+        port: 8080
+        targetPort: 8080
 
     backend:
       enabled: true
