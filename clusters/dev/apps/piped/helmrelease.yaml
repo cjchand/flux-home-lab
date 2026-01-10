@@ -37,6 +37,11 @@ spec:
           - hosts:
               - piped.internal
             secretName: piped-tls
+      containerSecurityContext:
+        enabled: true
+        capabilities:
+          add:
+            - NET_BIND_SERVICE
       env:
         FRONTEND_URL: https://piped.internal
         HTTP_PORT: 8080
