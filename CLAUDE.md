@@ -10,63 +10,64 @@ This is a GitOps-managed Kubernetes home lab using Flux CD. The repository manag
 
 - `clusters/dev/` - Main Flux configuration directory (only this path is monitored by Flux)
   - `flux-system/` - Core Flux components and Git repository sync configuration
-  - `cluster-services/` - Infrastructure services (NFS provisioner, Sealed Secrets)
+  - `cluster-services/` - Infrastructure services (NFS provisioner, Sealed Secrets, cert-manager)
   - `apps/` - Application deployments organized by service
-- `clusters/disabled/` - Temporarily disabled configurations (outside Flux scope)
-- `docs/` - Comprehensive documentation with architecture diagrams and service details
-
-## Key Technologies
-
-- **Flux CD**: GitOps operator managing all deployments
-- **Helm**: Package manager for Kubernetes applications
-- **Kustomize**: Configuration management and patching
-- **Sealed Secrets**: Encrypted secret management for secure GitOps
-- **Renovate**: Automated dependency updates for Helm charts
+- `clusters/disabled/` - Temporarily disabled configurations (move apps here to disable without deleting)
+- `docs/` - Documentation with architecture diagrams and service details
 
 ## Working with Applications
 
 Each application lives in `clusters/dev/apps/<app-name>/` and typically contains:
 - `helmrelease.yaml` - Flux HelmRelease defining the Helm chart and values
-- `kustomization.yaml` - Kustomize configuration for the namespace
+- `kustomization.yaml` - Kustomize configuration listing resources
 - `namespace.yaml` - Kubernetes namespace definition
-- `source-helmrepo-*.yaml` - Helm repository sources
-- Additional configs like ingress routes, secrets, or persistent volume claims
+- `helm-repository.yaml` or `source-helmrepo-*.yaml` - Helm repository source
+
+**Multi-component apps**: Complex applications (like teslamate) use a parent kustomization that references sub-components in separate directories (e.g., `teslamate-core/`, `teslamate-postgres/`, `teslamate-grafana/`).
 
 ## Adding New Applications
 
 1. Create directory under `clusters/dev/apps/<app-name>/`
-2. Add Helm repository source if needed
+2. Add Helm repository source if the chart repo isn't already defined
 3. Create namespace, HelmRelease, and kustomization files
 4. Update `clusters/dev/apps/kustomization.yaml` to include the new app
-5. For secrets, use Sealed Secrets (see docs/sealed-secrets.md)
+5. For secrets, use Sealed Secrets (see Managing Secrets below)
 
 ## Managing Secrets
 
 This repository uses Sealed Secrets for secure secret management:
-- Create regular Kubernetes secrets locally (never commit)
-- Encrypt with `kubeseal` using the cluster's public key
-- Commit the resulting SealedSecret YAML files
-- Reference encrypted secrets in HelmRelease configurations
+
+```bash
+# Fetch the cluster's public key
+kubeseal --fetch-cert --controller-name=sealed-secrets --controller-namespace=kube-system > pub-cert.pem
+
+# Encrypt a secret (create the vanilla secret locally, never commit it)
+kubeseal --cert=pub-cert.pem --format=yaml < secret.yaml > sealed-secret.yaml
+```
+
+Reference encrypted secrets in HelmRelease using `existingSecret` patterns:
+```yaml
+auth:
+  existingSecret: "my-sealed-secret"
+  secretKeys:
+    adminPasswordKey: "admin-password"
+```
 
 ## Development Commands
 
 This is a declarative GitOps repository - changes are applied by committing to Git:
-- Flux automatically syncs changes within 10 minutes
-- Force sync: `flux reconcile kustomization flux-system`
-- Check Flux status: `flux get all`
-- Validate Helm releases: `flux get helmreleases -A`
-
-## Monitoring Deployments
-
-- Flux reconciles from the `main` branch every 10 minutes
-- Applications are deployed via HelmRelease controllers
-- Check deployment status in the Kubernetes cluster or through monitoring tools
-- Renovate automatically creates PRs for Helm chart updates
+```bash
+flux reconcile kustomization flux-system   # Force immediate sync
+flux get all                                # Check Flux status
+flux get helmreleases -A                    # List all Helm releases
+flux logs --follow                          # Stream Flux controller logs
+```
 
 ## Architecture Notes
 
-- Uses microk8s with Calico networking
-- MetalLB provides LoadBalancer services for bare metal
-- Traefik serves as ingress controller and reverse proxy
-- NFS External Provisioner enables dynamic persistent volume provisioning
-- All applications are namespaced and isolated
+- **microk8s** cluster with Calico networking
+- **MetalLB** provides LoadBalancer services for bare metal
+- **Traefik** serves as ingress controller with HTTP→HTTPS redirect
+- **NFS External Provisioner** enables dynamic PVs using storageClass `nfs-client`
+- **cert-manager** with internal CA for TLS certificates on `.internal` domains
+- **Renovate** automatically creates PRs for Helm chart version updates
