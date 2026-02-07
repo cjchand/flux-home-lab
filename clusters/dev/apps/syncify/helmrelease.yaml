@@ -27,14 +27,14 @@ spec:
             env:
               PUID: "1000"
               PGID: "1000"
-              thread_limit: "16"
+              thread_limit: "8"
             resources:
               requests:
                 cpu: 100m
                 memory: 256Mi
               limits:
-                cpu: 1000m
-                memory: 1Gi
+                cpu: 2000m
+                memory: 6Gi
 
     service:
       main:
