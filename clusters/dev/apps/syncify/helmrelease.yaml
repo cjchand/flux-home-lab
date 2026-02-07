@@ -27,7 +27,7 @@ spec:
             env:
               PUID: "1000"
               PGID: "1000"
-              thread_limit: "4"
+              thread_limit: "16"
             resources:
               requests:
                 cpu: 100m
