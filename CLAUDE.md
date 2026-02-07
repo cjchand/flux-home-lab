@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is a GitOps-managed Kubernetes home lab using Flux CD. The repository manages both cluster-wide infrastructure services and applications deployed on a microk8s cluster. The lab runs on repurposed laptops with Ubuntu and uses a dedicated NAS for persistent storage.
+This is a GitOps-managed Kubernetes home lab using Flux CD. The repository manages both cluster-wide infrastructure services and applications deployed on a 3-node microk8s cluster (HP EliteDesk 800 G3 mini PCs running Ubuntu 24.04). A dedicated NAS provides persistent storage.
 
 ## Repository Structure
 
