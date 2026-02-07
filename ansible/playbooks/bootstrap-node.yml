@@ -1,0 +1,28 @@
+---
+# Bootstrap a new node from scratch
+# Run with: ansible-playbook playbooks/bootstrap-node.yml --limit <hostname>
+# After this, use join-cluster.yml to add the node to the cluster
+
+- name: Bootstrap new node
+  hosts: microk8s
+  become: yes
+  tasks:
+    - name: Run common role
+      ansible.builtin.include_role:
+        name: common
+
+    - name: Run microk8s role
+      ansible.builtin.include_role:
+        name: microk8s
+
+    - name: Run tailscale role
+      ansible.builtin.include_role:
+        name: tailscale
+
+    - name: Display next steps
+      ansible.builtin.debug:
+        msg:
+          - "Node {{ inventory_hostname }} has been bootstrapped."
+          - "Next steps:"
+          - "  1. If Tailscale needs auth: ssh {{ inventory_hostname }} 'sudo tailscale up'"
+          - "  2. To join cluster: ansible-playbook playbooks/join-cluster.yml -e 'new_node={{ inventory_hostname }}'"

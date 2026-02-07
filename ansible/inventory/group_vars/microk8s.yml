@@ -1,0 +1,20 @@
+---
+# microk8s snap channel (e.g., 1.29/stable, 1.30/stable)
+microk8s_channel: "1.31/stable"
+
+# Addons managed by Ansible (microk8s built-in)
+microk8s_addons_enabled:
+  - dns
+  - ha-cluster
+  - helm3
+  - rbac
+  - hostpath-storage
+
+# Addons explicitly disabled (managed by Flux instead)
+microk8s_addons_disabled:
+  - ingress
+  - metallb
+  - dashboard
+
+# User to add to microk8s group
+microk8s_user: chandler

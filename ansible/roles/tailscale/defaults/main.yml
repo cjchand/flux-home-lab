@@ -1,0 +1,14 @@
+---
+# Skip tailscale up command (useful if nodes are already authenticated)
+tailscale_up_skip: false
+
+# Accept routes advertised by other nodes in the tailnet
+tailscale_accept_routes: true
+
+# Routes to advertise (set per-host for subnet routers)
+# Example: ["192.168.86.0/24"]
+tailscale_advertise_routes: []
+
+# Auth key from environment variable (never commit actual keys)
+# Generate at: Tailscale Admin Console -> Settings -> Keys -> Generate auth key
+tailscale_auth_key: "{{ lookup('env', 'TAILSCALE_AUTH_KEY') }}"

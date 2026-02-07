@@ -1,0 +1,67 @@
+---
+# Rolling microk8s upgrade - one node at a time
+# Update microk8s_channel in group_vars/microk8s.yml before running
+
+- name: Rolling microk8s upgrade
+  hosts: microk8s
+  become: yes
+  serial: 1
+  tasks:
+    - name: Get current microk8s channel
+      ansible.builtin.shell: snap info microk8s | grep -E '^tracking:' | awk '{print $2}'
+      register: current_channel
+      changed_when: false
+
+    - name: Display channel info
+      ansible.builtin.debug:
+        msg: "Current: {{ current_channel.stdout }}, Target: {{ microk8s_channel }}"
+
+    - name: Check if upgrade needed
+      ansible.builtin.set_fact:
+        needs_upgrade: "{{ current_channel.stdout != microk8s_channel }}"
+
+    - name: Cordon node before upgrade
+      ansible.builtin.command: microk8s kubectl cordon {{ inventory_hostname }}
+      when: needs_upgrade
+      delegate_to: "{{ groups['microk8s_primary'][0] }}"
+
+    - name: Drain node before upgrade
+      ansible.builtin.command: >
+        microk8s kubectl drain {{ inventory_hostname }}
+        --ignore-daemonsets
+        --delete-emptydir-data
+        --timeout=300s
+      when: needs_upgrade
+      delegate_to: "{{ groups['microk8s_primary'][0] }}"
+
+    - name: Refresh microk8s to new channel
+      community.general.snap:
+        name: microk8s
+        channel: "{{ microk8s_channel }}"
+      when: needs_upgrade
+
+    - name: Wait for microk8s to be ready
+      ansible.builtin.command: microk8s status --wait-ready
+      changed_when: false
+      retries: 10
+      delay: 15
+      when: needs_upgrade
+
+    - name: Uncordon node after upgrade
+      ansible.builtin.command: microk8s kubectl uncordon {{ inventory_hostname }}
+      when: needs_upgrade
+      delegate_to: "{{ groups['microk8s_primary'][0] }}"
+
+    - name: Wait for node to stabilize
+      ansible.builtin.pause:
+        seconds: 60
+      when: needs_upgrade
+
+    - name: Verify node is ready
+      ansible.builtin.command: microk8s kubectl get node {{ inventory_hostname }}
+      register: node_status
+      until: "'Ready' in node_status.stdout"
+      retries: 10
+      delay: 10
+      when: needs_upgrade
+      delegate_to: "{{ groups['microk8s_primary'][0] }}"

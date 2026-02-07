@@ -1,0 +1,34 @@
+---
+# Addon management only runs on primary node since addons are cluster-wide
+- name: Get enabled addons
+  ansible.builtin.shell: microk8s status --format yaml
+  register: microk8s_status
+  changed_when: false
+  when: inventory_hostname in groups['microk8s_primary']
+
+- name: Parse microk8s status
+  ansible.builtin.set_fact:
+    microk8s_status_parsed: "{{ microk8s_status.stdout | from_yaml }}"
+  when: inventory_hostname in groups['microk8s_primary']
+
+- name: Enable required addons
+  ansible.builtin.command: "microk8s enable {{ item }}"
+  loop: "{{ microk8s_addons_enabled }}"
+  when:
+    - inventory_hostname in groups['microk8s_primary']
+    - microk8s_status_parsed.addons | selectattr('name', 'equalto', item) | selectattr('status', 'equalto', 'disabled') | list | length > 0
+  register: addon_enable
+  changed_when: addon_enable.rc == 0
+
+- name: Disable Flux-managed addons
+  ansible.builtin.command: "microk8s disable {{ item }}"
+  loop: "{{ microk8s_addons_disabled }}"
+  when:
+    - inventory_hostname in groups['microk8s_primary']
+    - microk8s_status_parsed.addons | selectattr('name', 'equalto', item) | selectattr('status', 'equalto', 'enabled') | list | length > 0
+  register: addon_disable
+  # Ignore NotFound errors - addon resources may already be gone
+  failed_when:
+    - addon_disable.rc != 0
+    - "'NotFound' not in addon_disable.stderr"
+  changed_when: addon_disable.rc == 0

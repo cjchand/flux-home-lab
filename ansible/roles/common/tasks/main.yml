@@ -1,0 +1,33 @@
+---
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Upgrade all packages
+  ansible.builtin.apt:
+    upgrade: dist
+    autoremove: yes
+    autoclean: yes
+  register: apt_upgrade
+
+- name: Install base packages
+  ansible.builtin.apt:
+    name: "{{ base_packages }}"
+    state: present
+
+- name: Set timezone
+  community.general.timezone:
+    name: "{{ timezone }}"
+  when: timezone is defined
+
+- name: Check if reboot is required
+  ansible.builtin.stat:
+    path: /var/run/reboot-required
+  register: reboot_required
+
+- name: Reboot if required
+  ansible.builtin.reboot:
+    msg: "Rebooting due to pending updates"
+    reboot_timeout: 300
+  when: reboot_required.stat.exists

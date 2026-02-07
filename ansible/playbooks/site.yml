@@ -1,0 +1,11 @@
+---
+# Full site setup - idempotent, can be run repeatedly
+# Does NOT join nodes to cluster (use join-cluster.yml for that)
+
+- name: Configure all microk8s nodes
+  hosts: microk8s
+  become: yes
+  roles:
+    - common
+    - microk8s
+    - tailscale

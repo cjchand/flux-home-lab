@@ -1,0 +1,42 @@
+---
+# Install and configure Tailscale with optional subnet routing
+# Auth key passed via TAILSCALE_AUTH_KEY environment variable
+
+- name: Check if Tailscale is installed
+  ansible.builtin.command: which tailscale
+  register: tailscale_check
+  failed_when: false
+  changed_when: false
+
+- name: Build tailscale_args for this host
+  ansible.builtin.set_fact:
+    tailscale_up_args: >-
+      --accept-routes={{ tailscale_accept_routes | lower }}
+      {% if tailscale_advertise_routes | length > 0 %}
+      --advertise-routes={{ tailscale_advertise_routes | join(',') }}
+      {% endif %}
+      --reset
+
+- name: Include artis3n.tailscale.machine role
+  ansible.builtin.include_role:
+    name: artis3n.tailscale.machine
+  vars:
+    tailscale_authkey: "{{ tailscale_auth_key }}"
+    tailscale_args: "{{ tailscale_up_args }}"
+    tailscale_up_skip: "{{ tailscale_auth_key | length == 0 }}"
+
+- name: Warn if auth key not provided
+  ansible.builtin.debug:
+    msg: "WARNING: TAILSCALE_AUTH_KEY not set. Run 'sudo tailscale up' manually on nodes."
+  when: tailscale_auth_key | length == 0
+
+- name: Get final Tailscale status
+  ansible.builtin.command: tailscale status
+  register: tailscale_final_status
+  changed_when: false
+  failed_when: false
+
+- name: Display Tailscale network status
+  ansible.builtin.debug:
+    msg: "{{ tailscale_final_status.stdout_lines }}"
+  when: tailscale_final_status.rc == 0

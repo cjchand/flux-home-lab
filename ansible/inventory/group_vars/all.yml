@@ -1,0 +1,20 @@
+---
+# Common packages to install on all nodes
+base_packages:
+  - curl
+  - wget
+  - htop
+  - vim
+  - git
+  - jq
+  - net-tools
+  - iotop
+  - ncdu
+  - tmux
+
+# Timezone configuration
+timezone: America/Chicago
+
+# Network configuration
+home_subnet: "192.168.86.0/24"
+pihole_ip: "192.168.86.53"

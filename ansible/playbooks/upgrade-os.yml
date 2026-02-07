@@ -1,0 +1,65 @@
+---
+# Rolling OS upgrade - one node at a time to maintain cluster availability
+
+- name: Rolling OS upgrade
+  hosts: microk8s
+  become: yes
+  serial: 1
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Perform dist-upgrade
+      ansible.builtin.apt:
+        upgrade: dist
+        autoremove: yes
+        autoclean: yes
+      register: apt_upgrade
+
+    - name: Display upgraded packages
+      ansible.builtin.debug:
+        msg: "{{ apt_upgrade.stdout_lines | default(['No packages upgraded']) }}"
+      when: apt_upgrade.changed
+
+    - name: Check if reboot is required
+      ansible.builtin.stat:
+        path: /var/run/reboot-required
+      register: reboot_required
+
+    - name: Cordon node before reboot
+      ansible.builtin.command: microk8s kubectl cordon {{ inventory_hostname }}
+      when: reboot_required.stat.exists
+      delegate_to: "{{ groups['microk8s_primary'][0] }}"
+
+    - name: Drain node before reboot
+      ansible.builtin.command: >
+        microk8s kubectl drain {{ inventory_hostname }}
+        --ignore-daemonsets
+        --delete-emptydir-data
+        --timeout=300s
+      when: reboot_required.stat.exists
+      delegate_to: "{{ groups['microk8s_primary'][0] }}"
+
+    - name: Reboot if required
+      ansible.builtin.reboot:
+        msg: "Rebooting due to OS updates"
+        reboot_timeout: 300
+      when: reboot_required.stat.exists
+
+    - name: Wait for microk8s to be ready after reboot
+      ansible.builtin.command: microk8s status --wait-ready
+      changed_when: false
+      retries: 10
+      delay: 15
+      when: reboot_required.stat.exists
+
+    - name: Uncordon node after reboot
+      ansible.builtin.command: microk8s kubectl uncordon {{ inventory_hostname }}
+      when: reboot_required.stat.exists
+      delegate_to: "{{ groups['microk8s_primary'][0] }}"
+
+    - name: Wait for node to be ready
+      ansible.builtin.pause:
+        seconds: 30
+      when: reboot_required.stat.exists

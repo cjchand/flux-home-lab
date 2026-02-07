@@ -1,0 +1,64 @@
+---
+# Join a node to the microk8s cluster
+# Run with: ansible-playbook playbooks/join-cluster.yml -e 'new_node=microk8s-node-03'
+
+- name: Generate join token on primary node
+  hosts: microk8s_primary
+  become: yes
+  tasks:
+    - name: Validate new_node is provided
+      ansible.builtin.fail:
+        msg: "You must specify the node to join with -e 'new_node=<hostname>'"
+      when: new_node is not defined
+
+    - name: Generate join token
+      ansible.builtin.command: microk8s add-node --format short
+      register: join_command
+      changed_when: false
+
+    - name: Set join command fact
+      ansible.builtin.set_fact:
+        microk8s_join_command: "{{ join_command.stdout_lines[0] }}"
+
+    - name: Display join command
+      ansible.builtin.debug:
+        msg: "Join command: {{ microk8s_join_command }}"
+
+- name: Join new node to cluster
+  hosts: "{{ new_node }}"
+  become: yes
+  tasks:
+    - name: Check if already joined to a cluster
+      ansible.builtin.command: microk8s status --format yaml
+      register: mk8s_status
+      changed_when: false
+
+    - name: Parse cluster status
+      ansible.builtin.set_fact:
+        mk8s_parsed: "{{ mk8s_status.stdout | from_yaml }}"
+
+    - name: Check if node is in HA cluster
+      ansible.builtin.set_fact:
+        already_joined: "{{ mk8s_parsed.high_availability.enabled | default(false) }}"
+
+    - name: Join the cluster
+      ansible.builtin.command: "{{ hostvars[groups['microk8s_primary'][0]]['microk8s_join_command'] }}"
+      when: not already_joined
+      register: join_result
+
+    - name: Display join result
+      ansible.builtin.debug:
+        msg: "{{ join_result.stdout_lines | default(['Already part of cluster']) }}"
+
+- name: Verify cluster membership
+  hosts: microk8s_primary
+  become: yes
+  tasks:
+    - name: Get cluster nodes
+      ansible.builtin.command: microk8s kubectl get nodes
+      register: cluster_nodes
+      changed_when: false
+
+    - name: Display cluster nodes
+      ansible.builtin.debug:
+        msg: "{{ cluster_nodes.stdout_lines }}"

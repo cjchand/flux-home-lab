@@ -1,0 +1,37 @@
+---
+- name: Add user to microk8s group
+  ansible.builtin.user:
+    name: "{{ microk8s_user }}"
+    groups: microk8s
+    append: yes
+
+- name: Create .kube directory for user
+  ansible.builtin.file:
+    path: "/home/{{ microk8s_user }}/.kube"
+    state: directory
+    owner: "{{ microk8s_user }}"
+    group: "{{ microk8s_user }}"
+    mode: "0755"
+
+- name: Export kubeconfig for user
+  ansible.builtin.shell: |
+    microk8s config > /home/{{ microk8s_user }}/.kube/config
+    chown {{ microk8s_user }}:{{ microk8s_user }} /home/{{ microk8s_user }}/.kube/config
+    chmod 600 /home/{{ microk8s_user }}/.kube/config
+  args:
+    creates: "/home/{{ microk8s_user }}/.kube/config"
+
+- name: Create kubectl alias
+  ansible.builtin.lineinfile:
+    path: "/home/{{ microk8s_user }}/.bashrc"
+    line: "alias kubectl='microk8s kubectl'"
+    create: yes
+    owner: "{{ microk8s_user }}"
+    group: "{{ microk8s_user }}"
+
+- name: Create helm alias
+  ansible.builtin.lineinfile:
+    path: "/home/{{ microk8s_user }}/.bashrc"
+    line: "alias helm='microk8s helm3'"
+    owner: "{{ microk8s_user }}"
+    group: "{{ microk8s_user }}"

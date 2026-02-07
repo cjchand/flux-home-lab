@@ -1,0 +1,16 @@
+---
+microk8s_channel: "1.31/stable"
+
+microk8s_addons_enabled:
+  - dns
+  - ha-cluster
+  - helm3
+  - rbac
+  - hostpath-storage
+
+microk8s_addons_disabled:
+  - ingress
+  - metallb
+  - dashboard
+
+microk8s_user: "{{ ansible_user }}"

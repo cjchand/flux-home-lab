@@ -1,0 +1,11 @@
+# Ansible cache
+.ansible_cache/
+
+# Retry files
+*.retry
+
+# Local inventory overrides
+inventory/local.yml
+
+# Downloaded roles (install via requirements.yml)
+roles/artis3n.tailscale/
