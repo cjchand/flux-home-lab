@@ -22,7 +22,7 @@ spec:
         containers:
           app:
             image:
-              repository: thewicklowwolf/syncify
+              repository: docker.io/cjchand/syncify
               tag: latest
             env:
               PUID: "1000"
