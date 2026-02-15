@@ -4,5 +4,5 @@ metadata:
   name: dns-report-config
   namespace: monitoring
 data:
-  PIHOLE_URL: "http://192.168.86.x"     # UPDATE with PiHole RPi address
-  CLIENT_IP: "192.168.86.y"              # UPDATE with Chromebook's static IP
+  PIHOLE_URL: "http://192.168.86.53"     # UPDATE with PiHole RPi address
+  CLIENT_IP: "192.168.86.32"              # UPDATE with Chromebook's static IP
