@@ -17,6 +17,9 @@ spec:
   values:
     frontend:
       enabled: true
+      args:
+        - -c
+        - "sed -i s/pipedapi.kavin.rocks/$BACKEND_HOSTNAME/g /usr/share/nginx/html/assets/* && sed -i 's/80;/8080;/g' /etc/nginx/conf.d/default.conf && /docker-entrypoint.sh nginx -g 'daemon off;'"
       ingress:
         enabled: true
         ingressClassName: traefik
@@ -37,20 +40,13 @@ spec:
           - hosts:
               - piped.internal
             secretName: piped-tls
-      containerSecurityContext:
-        enabled: true
-        capabilities:
-          add:
-            - NET_BIND_SERVICE
       env:
         FRONTEND_URL: https://piped.internal
-        HTTP_PORT: 8080
       service:
         main:
-          enabled: true
-          type: ClusterIP
-          port: 8080
-          targetPort: 8080
+          ports:
+            http:
+              port: 8080
     backend:
       enabled: true
       config:
