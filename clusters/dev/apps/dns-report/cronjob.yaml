@@ -4,7 +4,7 @@ metadata:
   name: dns-report
   namespace: monitoring
 spec:
-  schedule: "0 7 * * *"
+  schedule: "0 21 * * *"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3
