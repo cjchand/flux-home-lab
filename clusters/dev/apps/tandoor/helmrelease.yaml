@@ -26,7 +26,7 @@ spec:
       # -- image repository
       repository: ghcr.io/tandoorrecipes/recipes
       # -- image tag
-      tag: 2.2.7
+      tag: 2.5.3
       # -- image pull policy
       pullPolicy: IfNotPresent
       # -- image tag
