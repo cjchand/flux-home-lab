@@ -18,7 +18,7 @@ spec:
   values:
     ingress:
       enabled: true
-      ingressClassName: traefik
+      className: traefik
       annotations:
         traefik.ingress.kubernetes.io/router.entrypoints: websecure
         traefik.ingress.kubernetes.io/router.tls: "true"
@@ -41,5 +41,6 @@ spec:
     persistence:
       enabled: true
       storageClass: nfs-client
-      accessMode: ReadWriteOnce
+      accessModes:
+        - ReadWriteOnce
       size: 10Gi
