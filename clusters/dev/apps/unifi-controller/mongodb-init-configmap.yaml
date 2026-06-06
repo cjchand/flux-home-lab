@@ -7,14 +7,17 @@ data:
   init-unifi.sh: |
     #!/bin/bash
     set -e
-    mongosh admin --eval "
-      db.createUser({
-        user: 'unifi',
-        pwd: '$MONGO_USER_PASSWORD',
-        roles: [
-          { role: 'dbOwner', db: 'unifi' },
-          { role: 'dbOwner', db: 'unifi_stat' },
-          { role: 'dbOwner', db: 'unifi_audit' }
-        ]
-      });
-    "
+    mongosh admin \
+      -u "$MONGO_INITDB_ROOT_USERNAME" \
+      -p "$MONGO_INITDB_ROOT_PASSWORD" \
+      --eval "
+        db.createUser({
+          user: 'unifi',
+          pwd: '$MONGO_USER_PASSWORD',
+          roles: [
+            { role: 'dbOwner', db: 'unifi' },
+            { role: 'dbOwner', db: 'unifi_stat' },
+            { role: 'dbOwner', db: 'unifi_audit' }
+          ]
+        });
+      "
