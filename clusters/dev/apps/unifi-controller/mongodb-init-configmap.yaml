@@ -7,6 +7,7 @@ data:
   init-unifi.sh: |
     #!/bin/bash
     set -e
+    DECODED_PASS=$(python3 -c "import urllib.parse, os; print(urllib.parse.unquote(os.environ['MONGO_USER_PASSWORD']))")
     mongosh admin \
       -u "$MONGO_INITDB_ROOT_USERNAME" \
       -p "$MONGO_INITDB_ROOT_PASSWORD" \
@@ -14,7 +15,7 @@ data:
         db = db.getSiblingDB('unifi');
         db.createUser({
           user: 'unifi',
-          pwd: '$MONGO_USER_PASSWORD',
+          pwd: '$DECODED_PASS',
           roles: [
             { role: 'dbOwner', db: 'unifi' },
             { role: 'dbOwner', db: 'unifi_stat' },
