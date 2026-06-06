@@ -7,7 +7,7 @@ data:
   init-unifi.sh: |
     #!/bin/bash
     set -e
-    DECODED_PASS=$(python3 -c "import urllib.parse, os; print(urllib.parse.unquote(os.environ['MONGO_USER_PASSWORD']))")
+    DECODED_PASS=$(printf "%b" "${MONGO_USER_PASSWORD//%/\\x}")
     mongosh admin \
       -u "$MONGO_INITDB_ROOT_USERNAME" \
       -p "$MONGO_INITDB_ROOT_PASSWORD" \
