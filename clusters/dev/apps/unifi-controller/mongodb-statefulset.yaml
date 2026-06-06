@@ -1,0 +1,80 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: unifi-mongodb
+  namespace: unifi
+spec:
+  serviceName: unifi-mongodb
+  replicas: 1
+  selector:
+    matchLabels:
+      app: unifi-mongodb
+  template:
+    metadata:
+      labels:
+        app: unifi-mongodb
+    spec:
+      containers:
+        - name: mongodb
+          image: docker.io/mongo:7
+          ports:
+            - containerPort: 27017
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              value: root
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: unifi-mongodb-secret
+                  key: mongodb-root-password
+            - name: MONGO_USER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: unifi-mongodb-secret
+                  key: mongodb-passwords
+          volumeMounts:
+            - name: data
+              mountPath: /data/db
+            - name: init-scripts
+              mountPath: /docker-entrypoint-initdb.d
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+      volumes:
+        - name: init-scripts
+          configMap:
+            name: unifi-mongodb-init
+            defaultMode: 0755
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        annotations:
+          nfs.io/createUID: "999"
+          nfs.io/createGID: "999"
+          nfs.io/createMode: "0755"
+      spec:
+        accessModes:
+          - ReadWriteMany
+        storageClassName: nfs-client
+        resources:
+          requests:
+            storage: 8Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: unifi-mongodb
+  namespace: unifi
+spec:
+  type: ClusterIP
+  selector:
+    app: unifi-mongodb
+  ports:
+    - name: mongodb
+      port: 27017
+      targetPort: 27017
