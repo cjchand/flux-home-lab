@@ -12,5 +12,5 @@ resources:
   - tandoor/
   - teslamate/
   - traefik/
-  - unifi-controller/
+  - unifi/
   - uptime-kuma/

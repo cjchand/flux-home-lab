@@ -1,0 +1,76 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: unifi
+  namespace: unifi
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: unifi-os-server
+      version: "0.2.3"
+      sourceRef:
+        kind: HelmRepository
+        name: unifi-os
+        namespace: flux-system
+  values:
+    # Advertise the LoadBalancer IP to UniFi devices for adoption
+    systemIp: "192.168.86.202"
+
+    service:
+      type: LoadBalancer
+      annotations:
+        # Request a stable IP from MetalLB so device inform URLs don't change
+        metallb.universe.tf/loadBalancerIPs: "192.168.86.202"
+        # Allow all per-port services to share the same IP (required in MetalLB v0.14)
+        metallb.universe.tf/allow-shared-ip: "unifi"
+      externalTrafficPolicy: Cluster
+
+    persistence:
+      data:
+        storageClass: nfs-client
+        accessMode: ReadWriteOnce
+        size: 20Gi
+      mongo:
+        storageClass: nfs-client
+        accessMode: ReadWriteOnce
+        size: 10Gi
+
+    ports:
+      webui:
+        annotations:
+          # UOS terminates TLS itself; skip cert verification for the backend
+          traefik.ingress.kubernetes.io/service.serverstransport: unifi-unifi-transport@kubernetescrd
+
+    ingress:
+      enabled: true
+      className: traefik
+      host: unifi.internal
+      annotations:
+        traefik.ingress.kubernetes.io/router.entrypoints: websecure
+        traefik.ingress.kubernetes.io/router.tls: "true"
+        cert-manager.io/cluster-issuer: internal-ca
+        gethomepage.dev/enabled: "true"
+      tls:
+        enabled: true
+        secretName: unifi-tls
+      path: /
+      pathType: Prefix
+
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: kubernetes.io/hostname
+                  operator: In
+                  values:
+                    - microk8s-node-03
+
+    resources:
+      requests:
+        cpu: 500m
+        memory: 2Gi
+      limits:
+        cpu: "4"
+        memory: 6Gi

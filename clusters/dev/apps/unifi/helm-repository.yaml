@@ -1,0 +1,8 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: unifi-os
+  namespace: flux-system
+spec:
+  interval: 1h
+  url: https://chrissnell.github.io/unifi-os-kubernetes
