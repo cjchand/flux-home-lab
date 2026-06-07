@@ -48,7 +48,7 @@ spec:
     service:
       main:
         annotations:
-          traefik.ingress.kubernetes.io/service.serverstransport: unifi-transport@kubernetescrd
+          traefik.ingress.kubernetes.io/service.serverstransport: unifi-unifi-transport@kubernetescrd
         ports:
           controller:
             enabled: true
