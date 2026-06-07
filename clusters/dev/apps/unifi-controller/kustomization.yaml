@@ -7,4 +7,5 @@ resources:
   - mongodb-sealed-secret.yaml
   - mongodb-init-configmap.yaml
   - mongodb-statefulset.yaml
+  - unifi-servers-transport.yaml
   - helmrelease.yaml
