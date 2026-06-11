@@ -16,7 +16,7 @@ spec:
   values:
     image:
       repository: linuxserver/unifi-network-application
-      tag: "10.3.55"
+      tag: "10.4.57"
       pullPolicy: IfNotPresent
     persistence:
       data:
