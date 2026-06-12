@@ -22,7 +22,7 @@ spec:
       repository: homebridge/homebridge
       # -- image tag
       # @default -- chart.appVersion
-      tag: "2025-11-27"
+      tag: "2026-06-05"
       # -- image pull policy
       pullPolicy: IfNotPresent
 
