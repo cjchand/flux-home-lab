@@ -10,5 +10,4 @@ resources:
   - pvc-frigate-recordings.yaml
   - deployment-frigate.yaml
   - service-frigate.yaml
-  # ingress-frigate.yaml is optional — uncomment to enable in-cluster DNS access
-  # - ingress-frigate.yaml
+  - ingress-frigate.yaml
