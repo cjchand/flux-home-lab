@@ -1,0 +1,101 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frigate-config
+  namespace: frigate
+data:
+  config.yml: |
+    mqtt:
+      enabled: true
+      host: mosquitto.mqtt.svc.cluster.local
+      port: 1883
+
+    detectors:
+      # CPU-only inference — Intel GPUs on these nodes are too underpowered for Frigate.
+      # Tune num_threads based on observed CPU usage; 3 is a reasonable starting point
+      # for 3–5 cameras at 5 FPS each.
+      cpu1:
+        type: cpu
+        num_threads: 3
+
+    # go2rtc ingests streams from cameras and re-serves them internally via RTSP.
+    # HTTP-FLV is used instead of raw RTSP because Reolink's RTSP implementation
+    # has known instability in Frigate. See: https://docs.frigate.video/configuration/camera_specific/
+    #
+    # BEFORE DEPLOYING:
+    #   - Replace CAMERA_IP with each camera's actual IP address
+    #   - CAMERA_PASSWORD is injected via the CAMERA_PASSWORD environment variable
+    #     from the frigate-credentials Secret (see secret-frigate.yaml)
+    #   - Enable HTTP on each camera: Reolink app → Camera Settings → Network → Advanced → HTTP
+    #   - Do NOT auto-update Reolink firmware once a working version is confirmed.
+    #     Firmware archive for rollback: https://github.com/AT0myks/reolink-fw-archive
+    #   - Recommended: place cameras on an IoT VLAN with no outbound internet access
+    go2rtc:
+      streams:
+        # Main stream (high-res) — used for recording only
+        camera_kitchen:
+          - "ffmpeg:http://CAMERA_KITCHEN_IP/flv?port=1935&app=bcs&stream=channel0_main.bcs&user=admin&password=${CAMERA_PASSWORD}#video=copy#audio=copy#audio=opus"
+        # Sub-stream (low-res) — used for detection only; never run detection on main stream
+        camera_kitchen_sub:
+          - "ffmpeg:http://CAMERA_KITCHEN_IP/flv?port=1935&app=bcs&stream=channel0_ext.bcs&user=admin&password=${CAMERA_PASSWORD}"
+
+        # Add additional cameras by duplicating the blocks above:
+        # camera_living_room:
+        #   - "ffmpeg:http://CAMERA_LIVING_ROOM_IP/flv?port=1935&app=bcs&stream=channel0_main.bcs&user=admin&password=${CAMERA_PASSWORD}#video=copy#audio=copy#audio=opus"
+        # camera_living_room_sub:
+        #   - "ffmpeg:http://CAMERA_LIVING_ROOM_IP/flv?port=1935&app=bcs&stream=channel0_ext.bcs&user=admin&password=${CAMERA_PASSWORD}"
+        #
+        # camera_hallway:
+        #   - "ffmpeg:http://CAMERA_HALLWAY_IP/flv?port=1935&app=bcs&stream=channel0_main.bcs&user=admin&password=${CAMERA_PASSWORD}#video=copy#audio=copy#audio=opus"
+        # camera_hallway_sub:
+        #   - "ffmpeg:http://CAMERA_HALLWAY_IP/flv?port=1935&app=bcs&stream=channel0_ext.bcs&user=admin&password=${CAMERA_PASSWORD}"
+
+    cameras:
+      camera_kitchen:
+        ffmpeg:
+          inputs:
+            - path: rtsp://127.0.0.1:8554/camera_kitchen
+              input_args: preset-rtsp-restream
+              roles:
+                - record
+            - path: rtsp://127.0.0.1:8554/camera_kitchen_sub
+              input_args: preset-rtsp-restream
+              roles:
+                - detect
+        detect:
+          width: 640
+          height: 480
+          # 5 FPS is sufficient for person detection and saves significant CPU.
+          # Do not increase unless you have a specific reason.
+          fps: 5
+        objects:
+          track:
+            - person
+        record:
+          enabled: true
+          retain:
+            days: 7
+            mode: motion
+          events:
+            retain:
+              default: 14
+        snapshots:
+          enabled: true
+          retain:
+            default: 14
+
+      # Add additional cameras by duplicating the block above and updating the name
+      # to match the go2rtc stream names (camera_living_room, camera_hallway, etc.).
+      # After adding cameras, restart the Frigate pod:
+      #   kubectl rollout restart deployment/frigate -n frigate
+
+    birdseye:
+      enabled: true
+      # motion: only shows cameras with recent motion — saves resources
+      mode: motion
+
+    # Recordings are stored under /media/frigate, which is mounted from the NFS PVC.
+    # Storage math: ~5–8 GB/camera/day at motion-only mode.
+    # 7-day retain on 5 cameras ≈ 175–280 GB. Size the NAS share accordingly.
+    record:
+      enabled: true

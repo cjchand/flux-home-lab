@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: frigate
+  namespace: frigate
+spec:
+  selector:
+    app: frigate
+  ports:
+    # Frigate API — used by Home Assistant Frigate integration (unauthenticated internally)
+    - name: api
+      port: 5000
+      targetPort: 5000
+    # Frigate UI — authenticated web interface
+    - name: ui
+      port: 8971
+      targetPort: 8971
+    # go2rtc RTSP restream — internal only; cameras connect here for detection/recording
+    - name: rtsp
+      port: 8554
+      targetPort: 8554
+    # go2rtc API and debug UI — useful for verifying stream health
+    - name: go2rtc
+      port: 1984
+      targetPort: 1984

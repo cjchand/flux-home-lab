@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: frigate-recordings
+  namespace: frigate
+spec:
+  accessModes:
+    - ReadWriteMany
+  # Empty string disables dynamic provisioning — this PVC binds to the static
+  # frigate-recordings PV defined in pv-frigate-recordings.yaml.
+  storageClassName: ""
+  volumeName: frigate-recordings
+  resources:
+    requests:
+      storage: 2Ti

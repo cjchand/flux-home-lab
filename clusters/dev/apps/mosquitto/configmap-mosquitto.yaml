@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mosquitto-config
+  namespace: mqtt
+data:
+  mosquitto.conf: |
+    # Shared internal MQTT broker. Consumers: Frigate, Teslamate, and any future services.
+    # Anonymous access is intentional — this listener is not exposed outside the cluster.
+    listener 1883
+    allow_anonymous true
+    persistence false
+    log_dest stdout

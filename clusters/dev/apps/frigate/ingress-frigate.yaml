@@ -1,0 +1,31 @@
+# OPTIONAL — only needed if you want in-cluster DNS access to the Frigate UI
+# at https://frigate.internal. For Tailscale remote access, see REMOTE_ACCESS.md.
+#
+# BEFORE ENABLING: update kustomization.yaml to include this file,
+# and replace the hostname if desired.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: frigate
+  namespace: frigate
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    cert-manager.io/cluster-issuer: internal-ca
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - frigate.internal
+      secretName: frigate-tls
+  rules:
+    - host: frigate.internal
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frigate
+                port:
+                  number: 8971

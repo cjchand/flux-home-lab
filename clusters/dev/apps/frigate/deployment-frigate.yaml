@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frigate
+  namespace: frigate
+spec:
+  # Frigate is not HA-able — it uses shared memory IPC between processes.
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frigate
+  strategy:
+    # Ensure the old pod is fully stopped before starting the new one,
+    # so the NFS mount and /dev/shm are not contested between replicas.
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: frigate
+    spec:
+      containers:
+        - name: frigate
+          image: ghcr.io/blakeblackshear/frigate:stable
+          ports:
+            - containerPort: 5000
+              name: api
+            - containerPort: 8971
+              name: ui
+            - containerPort: 8554
+              name: rtsp
+            - containerPort: 1984
+              name: go2rtc
+          env:
+            - name: TZ
+              value: America/Chicago
+            - name: CAMERA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: frigate-credentials
+                  key: CAMERA_PASSWORD
+          volumeMounts:
+            - name: config
+              mountPath: /config/config.yml
+              subPath: config.yml
+            - name: recordings
+              mountPath: /media/frigate
+            # /dev/shm is required for Frigate's inter-process frame passing.
+            # Without this volume, Frigate will crash or perform very poorly in k8s.
+            # 512Mi is appropriate for 3–5 cameras; increase if you add more.
+            - name: dshm
+              mountPath: /dev/shm
+          resources:
+            requests:
+              # Tune after observing actual usage. CPU scales with camera count and
+              # resolution. Start here and adjust based on `kubectl top pod -n frigate`.
+              cpu: "2"
+              memory: 2Gi
+            limits:
+              cpu: "4"
+              memory: 4Gi
+      volumes:
+        - name: config
+          configMap:
+            name: frigate-config
+        - name: recordings
+          persistentVolumeClaim:
+            claimName: frigate-recordings
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 512Mi
