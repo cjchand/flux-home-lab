@@ -7,7 +7,6 @@ resources:
   # MQTT broker lives in clusters/dev/apps/mosquitto/ (shared with Teslamate and others)
   - secret-frigate.yaml
   - configmap-frigate.yaml
-  - pv-frigate-recordings.yaml
   - pvc-frigate-recordings.yaml
   - deployment-frigate.yaml
   - service-frigate.yaml

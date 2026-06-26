@@ -5,11 +5,9 @@ metadata:
   namespace: frigate
 spec:
   accessModes:
-    - ReadWriteMany
-  # Empty string disables dynamic provisioning — this PVC binds to the static
-  # frigate-recordings PV defined in pv-frigate-recordings.yaml.
-  storageClassName: ""
-  volumeName: frigate-recordings
+    - ReadWriteOnce
+  storageClassName: nfs-client
   resources:
     requests:
-      storage: 2Ti
+      # ~5–8 GB/camera/day at motion-only mode; 7-day retain × 3 cameras ≈ 160 GB minimum.
+      storage: 200Gi
