@@ -5,8 +5,9 @@ resources:
   - namespace.yaml
   # Frigate NVR — seal secret-frigate.yaml before deploying (see README.md)
   # MQTT broker lives in clusters/dev/apps/mosquitto/ (shared with Teslamate and others)
-  - secret-frigate.yaml
+  - sealed-secret-frigate.yaml
   - configmap-frigate.yaml
+  - pvc-frigate-config.yaml
   - pvc-frigate-recordings.yaml
   - deployment-frigate.yaml
   - service-frigate.yaml
