@@ -33,11 +33,11 @@ spec:
           env:
             - name: TZ
               value: America/Chicago
-            - name: CAMERA_PASSWORD
+            - name: FRIGATE_RTSP_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: frigate-credentials
-                  key: CAMERA_PASSWORD
+                  key: FRIGATE_RTSP_PASSWORD
           volumeMounts:
             - name: config
               mountPath: /config/config.yml
