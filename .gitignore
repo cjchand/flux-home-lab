@@ -1,0 +1,2 @@
+# SealedSecrets template files
+clusters/dev/apps/frigate/secret-frigate.yaml
