@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homeassistant-packages
+  namespace: homeassistant
+data:
+  frigate_recording_schedule.yaml: |
+    # Frigate recording schedule package.
+    # Controls when cameras record and detect based on time-of-day and presence.
+    #
+    # Logic:
+    #   - Cameras are ALWAYS active overnight (22:00–07:00)
+    #   - Cameras are DISABLED during the day when someone is home
+    #   - Cameras ACTIVATE during the day when everyone leaves
+    #   - Cameras DEACTIVATE during the day when someone arrives home
+    #
+    # Prerequisites:
+    #   - Frigate HACS integration installed and configured
+    #   - person.<name> entities configured via HA Companion App
+    #   - Update CAMERA_SWITCHES below if you add more cameras
+
+    automation:
+      # --- Overnight: enable cameras at 22:00 ---
+      - alias: "Frigate - Enable cameras overnight"
+        id: frigate_enable_overnight
+        trigger:
+          - platform: time
+            at: "22:00:00"
+        action:
+          - service: switch.turn_on
+            target:
+              entity_id: &camera_switches
+                - switch.camera_kitchen_recording
+                - switch.camera_kitchen_detect
+                # Add additional cameras here as you install them:
+                # - switch.camera_living_room_recording
+                # - switch.camera_living_room_detect
+
+      # --- Morning: disable cameras at 07:00 if someone is home ---
+      - alias: "Frigate - Disable cameras morning"
+        id: frigate_disable_morning
+        trigger:
+          - platform: time
+            at: "07:00:00"
+        condition:
+          - condition: not
+            conditions:
+              - condition: state
+                entity_id: group.household
+                state: not_home
+        action:
+          - service: switch.turn_off
+            target:
+              entity_id: *camera_switches
+
+      # --- Presence: enable cameras when everyone leaves (daytime only) ---
+      - alias: "Frigate - Enable cameras when everyone leaves"
+        id: frigate_enable_on_departure
+        trigger:
+          - platform: state
+            entity_id: group.household
+            to: not_home
+        condition:
+          - condition: time
+            after: "07:00:00"
+            before: "22:00:00"
+        action:
+          - service: switch.turn_on
+            target:
+              entity_id: *camera_switches
+
+      # --- Presence: disable cameras when someone arrives home (daytime only) ---
+      - alias: "Frigate - Disable cameras when someone arrives home"
+        id: frigate_disable_on_arrival
+        trigger:
+          - platform: state
+            entity_id: group.household
+            to: home
+        condition:
+          - condition: time
+            after: "07:00:00"
+            before: "22:00:00"
+        action:
+          - service: switch.turn_off
+            target:
+              entity_id: *camera_switches
