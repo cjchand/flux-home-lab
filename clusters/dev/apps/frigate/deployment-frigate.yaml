@@ -18,6 +18,22 @@ spec:
       labels:
         app: frigate
     spec:
+      initContainers:
+        - name: init-config
+          image: busybox:1.28
+          command:
+            - sh
+            - -c
+            - |
+              if [ ! -f /config/config.yml ]; then
+                echo "Seeding config from ConfigMap"
+                cp /config-seed/config.yml /config/config.yml
+              fi
+          volumeMounts:
+            - name: config-storage
+              mountPath: /config
+            - name: config-seed
+              mountPath: /config-seed
       containers:
         - name: frigate
           image: ghcr.io/blakeblackshear/frigate:stable
@@ -41,9 +57,6 @@ spec:
           volumeMounts:
             - name: config-storage
               mountPath: /config
-            - name: config
-              mountPath: /config/config.yml
-              subPath: config.yml
             - name: recordings
               mountPath: /media/frigate
             # /dev/shm is required for Frigate's inter-process frame passing.
@@ -64,7 +77,7 @@ spec:
         - name: config-storage
           persistentVolumeClaim:
             claimName: frigate-config
-        - name: config
+        - name: config-seed
           configMap:
             name: frigate-config
         - name: recordings
