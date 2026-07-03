@@ -1,0 +1,46 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: frigate-overnight-summary
+  namespace: frigate
+spec:
+  schedule: "0 7 * * *"
+  timeZone: "America/Chicago"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: summary
+              image: python:3.12-slim
+              command: ["python", "/scripts/overnight-summary.py"]
+              env:
+                - name: FRIGATE_URL
+                  value: "http://10.152.183.162:5000"
+                - name: FRIGATE_PUBLIC_URL
+                  value: "https://frigate.internal"
+                - name: SLACK_BOT_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: frigate-overnight-summary-secret
+                      key: SLACK_BOT_TOKEN
+                - name: SLACK_CHANNEL
+                  value: "#camera-notifications"
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  cpu: 200m
+                  memory: 128Mi
+          volumes:
+            - name: scripts
+              configMap:
+                name: frigate-overnight-summary-script

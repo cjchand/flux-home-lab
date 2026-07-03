@@ -12,3 +12,6 @@ resources:
   - deployment-frigate.yaml
   - service-frigate.yaml
   - ingress-frigate.yaml
+  - configmap-overnight-summary.yaml
+  - cronjob-overnight-summary.yaml
+  - sealed-secret-overnight-summary.yaml

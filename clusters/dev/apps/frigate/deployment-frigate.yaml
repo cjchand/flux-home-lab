@@ -25,7 +25,7 @@ spec:
             - sh
             - -c
             - |
-              if [ ! -f /config/config.yml ]; then
+              if [ ! -s /config/config.yml ]; then
                 echo "Seeding config from ConfigMap"
                 cp /config-seed/config.yml /config/config.yml
               fi

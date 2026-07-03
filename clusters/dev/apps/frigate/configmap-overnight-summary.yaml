@@ -1,0 +1,108 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frigate-overnight-summary-script
+  namespace: frigate
+data:
+  overnight-summary.py: |
+    #!/usr/bin/env python3
+    import json
+    import os
+    import urllib.request
+    from datetime import datetime, timezone, timedelta
+
+    FRIGATE_URL = os.environ["FRIGATE_URL"]
+    FRIGATE_PUBLIC_URL = os.environ["FRIGATE_PUBLIC_URL"]
+    SLACK_BOT_TOKEN = os.environ["SLACK_BOT_TOKEN"]
+    SLACK_CHANNEL = os.environ["SLACK_CHANNEL"]
+
+    # Chicago UTC offset: CDT (UTC-5) Mar–Nov, CST (UTC-6) otherwise
+    def chicago_now():
+        utc = datetime.now(timezone.utc)
+        offset = -5 if 3 <= utc.month <= 11 else -6
+        return utc + timedelta(hours=offset), offset
+
+    def fmt_time(ts, utc_offset):
+        dt = datetime.fromtimestamp(ts, tz=timezone.utc) + timedelta(hours=utc_offset)
+        hour = dt.hour % 12 or 12
+        period = "AM" if dt.hour < 12 else "PM"
+        return f"{hour}:{dt.minute:02d} {period}"
+
+    def get_events():
+        # Script runs at 7am Chicago time; look back 9 hours to cover 10pm–7am
+        now_utc = datetime.now(timezone.utc)
+        before = int(now_utc.timestamp())
+        after = int((now_utc - timedelta(hours=9)).timestamp())
+        url = f"{FRIGATE_URL}/api/events?label=person&after={after}&before={before}&limit=100"
+        with urllib.request.urlopen(url, timeout=10) as r:
+            return json.loads(r.read()), after, before
+
+    def post_slack(payload):
+        payload["channel"] = SLACK_CHANNEL
+        data = json.dumps(payload).encode()
+        req = urllib.request.Request(
+            "https://slack.com/api/chat.postMessage",
+            data=data,
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {SLACK_BOT_TOKEN}",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=10) as r:
+            body = json.loads(r.read())
+            if not body.get("ok"):
+                raise RuntimeError(f"Slack error: {body.get('error')}")
+            return body
+
+    def main():
+        events, after_ts, before_ts = get_events()
+        local_now, utc_offset = chicago_now()
+        date_str = local_now.strftime("%a %b %-d")
+
+        if not events:
+            blocks = [
+                {
+                    "type": "header",
+                    "text": {"type": "plain_text", "text": f"🌙 Overnight Summary — {date_str}"},
+                },
+                {
+                    "type": "section",
+                    "text": {"type": "mrkdwn", "text": "No activity detected overnight. ✅"},
+                },
+            ]
+            fallback = f"🌙 Overnight Summary — {date_str}: no activity detected."
+        else:
+            count = len(events)
+            times_str = "\n".join(f"  • {fmt_time(e['start_time'], utc_offset)}" for e in events)
+            first_id = events[0]["id"]
+            thumbnail_url = f"{FRIGATE_PUBLIC_URL}/api/events/{first_id}/thumbnail.jpg"
+            events_url = f"{FRIGATE_PUBLIC_URL}/events"
+
+            blocks = [
+                {
+                    "type": "header",
+                    "text": {"type": "plain_text", "text": f"🌙 Overnight Summary — {date_str}"},
+                },
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": (
+                            f"*{count} person detection{'s' if count != 1 else ''} overnight:*\n"
+                            f"{times_str}\n\n"
+                            f"<{events_url}|View recordings in Frigate>"
+                        ),
+                    },
+                },
+                {
+                    "type": "image",
+                    "image_url": thumbnail_url,
+                    "alt_text": "First detection thumbnail",
+                },
+            ]
+            fallback = f"🌙 {count} person detection{'s' if count != 1 else ''} overnight — {date_str}. View: {events_url}"
+
+        post_slack({"text": fallback, "blocks": blocks})
+        print(f"Done. Events: {len(events)}")
+
+    main()
