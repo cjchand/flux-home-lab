@@ -63,7 +63,7 @@ data:
             blocks = [
                 {
                     "type": "header",
-                    "text": {"type": "plain_text", "text": f"🌙 Overnight Summary — {date_str}"},
+                    "text": {"type": "plain_text", "text": f":crescent_moon: Overnight Summary — {date_str}", "emoji": True},
                 },
                 {
                     "type": "section",
@@ -73,15 +73,21 @@ data:
             fallback = f"🌙 Overnight Summary — {date_str}: no activity detected."
         else:
             count = len(events)
-            times_str = "\n".join(f"  • {fmt_time(e['start_time'], utc_offset)}" for e in events)
-            first_id = events[0]["id"]
-            thumbnail_url = f"{FRIGATE_PUBLIC_URL}/api/events/{first_id}/thumbnail.jpg"
-            events_url = f"{FRIGATE_PUBLIC_URL}/events"
+            camera_labels = {
+                "camera_kitchen": "Kitchen",
+                "camera_living_room": "Living Room",
+                "camera_workout_room": "Workout Room",
+            }
+            times_str = "\n".join(
+                f"  • {fmt_time(e['start_time'], utc_offset)} — {camera_labels.get(e['camera'], e['camera'])}"
+                for e in events
+            )
+            events_url = f"{FRIGATE_PUBLIC_URL}/review"
 
             blocks = [
                 {
                     "type": "header",
-                    "text": {"type": "plain_text", "text": f"🌙 Overnight Summary — {date_str}"},
+                    "text": {"type": "plain_text", "text": f":crescent_moon: Overnight Summary — {date_str}", "emoji": True},
                 },
                 {
                     "type": "section",
@@ -93,11 +99,6 @@ data:
                             f"<{events_url}|View recordings in Frigate>"
                         ),
                     },
-                },
-                {
-                    "type": "image",
-                    "image_url": thumbnail_url,
-                    "alt_text": "First detection thumbnail",
                 },
             ]
             fallback = f"🌙 {count} person detection{'s' if count != 1 else ''} overnight — {date_str}. View: {events_url}"
