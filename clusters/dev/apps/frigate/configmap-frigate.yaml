@@ -31,11 +31,14 @@ data:
         camera_kitchen_sub:
           - "rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.86.37:554/h264Preview_01_sub"
 
-        # Add additional cameras by duplicating the blocks above:
-        # camera_living_room:
-        #   - "rtsp://admin:{FRIGATE_RTSP_PASSWORD}@CAMERA_IP:554/h264Preview_01_main"
-        # camera_living_room_sub:
-        #   - "rtsp://admin:{FRIGATE_RTSP_PASSWORD}@CAMERA_IP:554/h264Preview_01_sub"
+        camera_living_room:
+          - "rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.86.66:554/h264Preview_01_main"
+        camera_living_room_sub:
+          - "rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.86.66:554/h264Preview_01_sub"
+        camera_workout_room:
+          - "rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.86.65:554/h264Preview_01_main"
+        camera_workout_room_sub:
+          - "rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.86.65:554/h264Preview_01_sub"
 
     cameras:
       camera_kitchen:
@@ -62,7 +65,51 @@ data:
         snapshots:
           enabled: true
 
-      # Add cameras by duplicating the block above. Name must match the go2rtc stream name.
+      camera_living_room:
+        ffmpeg:
+          inputs:
+            - path: rtsp://127.0.0.1:8554/camera_living_room
+              input_args: preset-rtsp-restream
+              roles:
+                - record
+            - path: rtsp://127.0.0.1:8554/camera_living_room_sub
+              input_args: preset-rtsp-restream
+              roles:
+                - detect
+        detect:
+          width: 640
+          height: 480
+          fps: 5
+        objects:
+          track:
+            - person
+        record:
+          enabled: true
+        snapshots:
+          enabled: true
+
+      camera_workout_room:
+        ffmpeg:
+          inputs:
+            - path: rtsp://127.0.0.1:8554/camera_workout_room
+              input_args: preset-rtsp-restream
+              roles:
+                - record
+            - path: rtsp://127.0.0.1:8554/camera_workout_room_sub
+              input_args: preset-rtsp-restream
+              roles:
+                - detect
+        detect:
+          width: 640
+          height: 480
+          fps: 5
+        objects:
+          track:
+            - person
+        record:
+          enabled: true
+        snapshots:
+          enabled: true
 
     birdseye:
       enabled: true
