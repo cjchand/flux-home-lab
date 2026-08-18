@@ -30,7 +30,6 @@ data:
           - "rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.86.37:554/h264Preview_01_main"
         camera_kitchen_sub:
           - "rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.86.37:554/h264Preview_01_sub"
-
         camera_living_room:
           - "rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.86.66:554/h264Preview_01_main"
         camera_living_room_sub:
@@ -39,6 +38,10 @@ data:
           - "rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.86.65:554/h264Preview_01_main"
         camera_workout_room_sub:
           - "rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.86.65:554/h264Preview_01_sub"
+        camera_garage:
+          - "rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.86.47:554/h264Preview_01_main"
+        camera_garage_sub:
+          - "rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.86.47:554/h264Preview_01_sub"
 
     cameras:
       camera_kitchen:
@@ -106,6 +109,39 @@ data:
         objects:
           track:
             - person
+        # Drawn in the Frigate UI; masks a reflective surface that generated
+        # constant false motion. Coordinates are normalized (0–1).
+        motion:
+          mask: 0.695,0.68,0.693,0.758,0.773,0.751,0.774,0.667
+        record:
+          enabled: true
+        snapshots:
+          enabled: true
+
+      camera_garage:
+        ffmpeg:
+          inputs:
+            - path: rtsp://127.0.0.1:8554/camera_garage
+              input_args: preset-rtsp-restream
+              roles:
+                - record
+            - path: rtsp://127.0.0.1:8554/camera_garage_sub
+              input_args: preset-rtsp-restream
+              roles:
+                - detect
+        detect:
+          width: 640
+          height: 480
+          # 5 FPS is sufficient for person detection and saves significant CPU.
+          fps: 5
+        objects:
+          track:
+            - person
+          # Drawn in the Frigate UI. Normalized coordinates, so these stay valid
+          # now that detect runs on the sub stream instead of the main stream.
+          mask:
+            - 0.031,0.218,0.031,0.295,0.062,0.297,0.062,0.213
+            - 0.226,0.171,0.233,0.276,0.287,0.277,0.286,0.154
         record:
           enabled: true
         snapshots:
@@ -118,7 +154,7 @@ data:
 
     # Recordings are stored under /media/frigate, which is mounted from the NFS PVC.
     # Storage math: ~5–8 GB/camera/day at motion-only mode.
-    # 7-day retain on 3 cameras ≈ 120–170 GB. Size the NAS share accordingly.
+    # 7-day retain on 4 cameras ≈ 160–225 GB. Size the NAS share accordingly.
     record:
       enabled: true
       motion:

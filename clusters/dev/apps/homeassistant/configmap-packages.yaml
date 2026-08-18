@@ -29,12 +29,18 @@ data:
         action:
           - service: switch.turn_on
             target:
+              # Entity IDs come from the Frigate HACS integration: it creates a
+              # `recordings` (plural) and `detect` switch per camera in Frigate's config.
+              # Add a pair here for each camera you add to configmap-frigate.yaml.
               entity_id: &camera_switches
-                - switch.camera_kitchen_recording
+                - switch.camera_kitchen_recordings
                 - switch.camera_kitchen_detect
-                # Add additional cameras here as you install them:
-                # - switch.camera_living_room_recording
-                # - switch.camera_living_room_detect
+                - switch.camera_living_room_recordings
+                - switch.camera_living_room_detect
+                - switch.camera_workout_room_recordings
+                - switch.camera_workout_room_detect
+                - switch.camera_garage_recordings
+                - switch.camera_garage_detect
 
       # --- Morning: disable cameras at 07:00 if someone is home ---
       - alias: "Frigate - Disable cameras morning"

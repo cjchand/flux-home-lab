@@ -120,8 +120,13 @@ See `HOMEASSISTANT_SETUP.md` for MQTT integration, Frigate HACS integration, and
 1. Edit `configmap-frigate.yaml`:
    - Add a new `go2rtc.streams` block for the main and sub streams
    - Add a new `cameras` block (copy from `camera_kitchen`, update name and stream paths)
-2. Apply the updated ConfigMap: `kubectl apply -f clusters/dev/apps/frigate/configmap-frigate.yaml`
-3. Restart Frigate: `kubectl rollout restart deployment/frigate -n frigate`
+2. Edit `configmap-overnight-summary.yaml`: add the camera to `camera_labels` so the
+   nightly Slack summary shows a friendly name instead of the raw `camera_*` key.
+3. Edit `../homeassistant/configmap-packages.yaml`: add
+   `switch.<camera>_recordings` and `switch.<camera>_detect` to the `&camera_switches`
+   anchor, or the presence/overnight automations won't control the new camera.
+4. Apply the updated ConfigMap: `kubectl apply -f clusters/dev/apps/frigate/configmap-frigate.yaml`
+5. Restart Frigate: `kubectl rollout restart deployment/frigate -n frigate`
 
 Camera names must be consistent across `go2rtc.streams` and `cameras` sections.
 

@@ -19,16 +19,26 @@ spec:
         app: frigate
     spec:
       initContainers:
+        # The ConfigMap is the source of truth: config.yml is overwritten on every
+        # start. Frigate's built-in UI config editor writes to the PVC, so any edit
+        # made there is lost on the next restart — make config changes in
+        # configmap-frigate.yaml instead. A timestamped backup of the replaced file
+        # is kept so UI-drawn zones/masks can be recovered and ported into Git.
+        #
+        # This was previously a seed-only copy (`if [ ! -s /config/config.yml ]`),
+        # which let the running config drift from the repo for months.
         - name: init-config
           image: busybox:1.28
           command:
             - sh
             - -c
             - |
-              if [ ! -s /config/config.yml ]; then
-                echo "Seeding config from ConfigMap"
-                cp /config-seed/config.yml /config/config.yml
+              if [ -s /config/config.yml ] && ! cmp -s /config-seed/config.yml /config/config.yml; then
+                echo "Live config differs from ConfigMap; backing up before overwrite"
+                cp /config/config.yml "/config/config.yml.bak-$(date +%Y%m%d-%H%M%S)"
               fi
+              echo "Applying config from ConfigMap"
+              cp /config-seed/config.yml /config/config.yml
           volumeMounts:
             - name: config-storage
               mountPath: /config
