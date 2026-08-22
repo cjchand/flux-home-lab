@@ -78,6 +78,7 @@ data:
                 "camera_living_room": "Living Room",
                 "camera_workout_room": "Workout Room",
                 "camera_garage": "Garage",
+                "camera_doorbell": "Doorbell",
             }
             times_str = "\n".join(
                 f"  • {fmt_time(e['start_time'], utc_offset)} — {camera_labels.get(e['camera'], e['camera'])}"

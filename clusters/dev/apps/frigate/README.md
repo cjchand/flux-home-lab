@@ -126,9 +126,17 @@ See `HOMEASSISTANT_SETUP.md` for MQTT integration, Frigate HACS integration, and
    `switch.<camera>_recordings` and `switch.<camera>_detect` to the `&camera_switches`
    anchor, or the presence/overnight automations won't control the new camera.
 4. Apply the updated ConfigMap: `kubectl apply -f clusters/dev/apps/frigate/configmap-frigate.yaml`
+   (or just push and let Flux reconcile)
 5. Restart Frigate: `kubectl rollout restart deployment/frigate -n frigate`
 
 Camera names must be consistent across `go2rtc.streams` and `cameras` sections.
+
+**Do not add cameras through the Frigate web UI.** The UI writes to `/config/config.yml`
+on the PVC and defaults to detecting on the full-resolution main stream, which pins the
+CPU. The init container in `deployment-frigate.yaml` overwrites that file from the
+ConfigMap, so a UI-added camera is reverted — but *only on pod creation*. Restarting
+Frigate from its own UI restarts the container within the existing pod, which does **not**
+re-run init containers. Use `kubectl rollout restart deployment/frigate -n frigate`.
 
 ---
 

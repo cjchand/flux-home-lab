@@ -170,11 +170,6 @@ data:
         objects:
           track:
             - person
-          # Drawn in the Frigate UI. Normalized coordinates, so these stay valid
-          # now that detect runs on the sub stream instead of the main stream.
-          mask:
-            - 0.031,0.218,0.031,0.295,0.062,0.297,0.062,0.213
-            - 0.226,0.171,0.233,0.276,0.287,0.277,0.286,0.154
         record:
           enabled: true
         snapshots:
@@ -187,7 +182,7 @@ data:
 
     # Recordings are stored under /media/frigate, which is mounted from the NFS PVC.
     # Storage math: ~5–8 GB/camera/day at motion-only mode.
-    # 7-day retain on 4 cameras ≈ 160–225 GB. Size the NAS share accordingly.
+    # 7-day retain on 5 cameras ≈ 200–280 GB. Size the NAS share accordingly.
     record:
       enabled: true
       motion:

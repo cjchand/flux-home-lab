@@ -41,6 +41,8 @@ data:
                 - switch.camera_workout_room_detect
                 - switch.camera_garage_recordings
                 - switch.camera_garage_detect
+                - switch.camera_doorbell_recordings
+                - switch.camera_doorbell_detect
 
       # --- Morning: disable cameras at 07:00 if someone is home ---
       - alias: "Frigate - Disable cameras morning"
