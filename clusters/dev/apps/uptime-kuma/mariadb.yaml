@@ -1,10 +1,20 @@
 ---
 # MariaDB backing store for Uptime Kuma.
 #
-# Deliberately NOT on the nfs-client storage class: the previous SQLite
-# database lived on NFSv3, where WAL mode's mmap'd -shm file has no coherent
-# locking. That corrupted the database on 2025-11-26 (see docs/uptime-kuma.md).
-# Database files must stay on a local filesystem.
+# Storage is nfs-client, matching the rest of the cluster, so the database
+# falls inside the NAS backup scope.
+#
+# This is safe here even though SQLite on the same NFS was not. SQLite in WAL
+# mode coordinates multiple *client* processes through an mmap'd -shm file,
+# which NFS cannot keep coherent -- that is what corrupted the old database on
+# 2025-11-26. MariaDB is a different shape: a single server process owns the
+# data directory exclusively and clients reach it over TCP, so there is no
+# cross-client mmap to lose coherence.
+#
+# The one rule that matters: never let two mysqld processes open this datadir
+# at once, or InnoDB will corrupt. The StatefulSet guarantees at most one pod
+# per ordinal; do not force-delete the pod while it may still be running on an
+# unreachable node.
 apiVersion: v1
 kind: Service
 metadata:
@@ -102,7 +112,7 @@ spec:
       spec:
         accessModes:
           - ReadWriteOnce
-        storageClassName: microk8s-hostpath
+        storageClassName: nfs-client
         resources:
           requests:
             storage: 8Gi
