@@ -39,7 +39,7 @@ This repository uses Sealed Secrets for secure secret management:
 
 ```bash
 # Fetch the cluster's public key
-kubeseal --fetch-cert --controller-name=sealed-secrets --controller-namespace=kube-system > pub-cert.pem
+kubeseal --fetch-cert --controller-name=sealed-secrets-controller --controller-namespace=flux-system > pub-cert.pem
 
 # Encrypt a secret (create the vanilla secret locally, never commit it)
 kubeseal --cert=pub-cert.pem --format=yaml < secret.yaml > sealed-secret.yaml
