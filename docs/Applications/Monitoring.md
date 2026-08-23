@@ -32,16 +32,25 @@ Uptime Kuma provides real-time monitoring of services and applications, with a b
 - Docker support
 
 ![Monitoring Namespace](../assets/images/monitoring-namespace.png) 
-### Storage: MariaDB, not SQLite on NFS
+### Storage: MariaDB on NFS, not SQLite on NFS
 
 Uptime Kuma's database runs on a dedicated MariaDB StatefulSet
-(`clusters/dev/apps/uptime-kuma/mariadb.yaml`) whose PVC uses the
-**`microk8s-hostpath`** storage class. This is deliberate.
+(`clusters/dev/apps/uptime-kuma/mariadb.yaml`) on the `nfs-client` storage
+class, so it sits inside the NAS backup scope like everything else.
 
-**Do not move a database onto the `nfs-client` storage class.** SQLite in WAL
-mode coordinates writers through an mmap'd `-shm` file, and NFS cannot keep
-that mapping coherent across clients. SQLite's own documentation says WAL does
-not work on network filesystems.
+**The distinction that matters is SQLite vs. a database server, not NFS vs.
+local disk.** SQLite in WAL mode coordinates multiple *client* processes
+through an mmap'd `-shm` file, and NFS cannot keep that mapping coherent —
+SQLite's own documentation says WAL does not work on network filesystems.
+A MariaDB or Postgres server process owns its data directory exclusively and
+serves clients over TCP, so no cross-client mmap is involved. That is why the
+`coder` CNPG cluster and the teslamate Postgres have run happily on
+`nfs-client` for years while the SQLite file did not.
+
+The one rule for a database server on NFS: never let two server processes open
+the same datadir, or InnoDB will corrupt. A StatefulSet guarantees at most one
+pod per ordinal — do not force-delete the pod while it may still be running on
+an unreachable node.
 
 This bit us: the original SQLite database sat on an NFSv3 PVC and corrupted on
 2025-11-26, then threw `SQLITE_CORRUPT` for nine months (1638 errors) until it
@@ -54,6 +63,10 @@ definitions were reconstructed from free-page remnants via `strings`.
 
 The corrupt database is archived on the NFS volume at
 `/app/data/corrupt-sqlite-2026-08-22/`.
+
+**Uptime Kuma cannot use the CloudNativePG operator.** Version 2.5.0 supports
+only `sqlite` and `mariadb` (see `/app/server/database.js`); there is no
+Postgres driver. This is an application limit, unrelated to storage.
 
 ### Pin the image, don't float the tag
 
