@@ -3,4 +3,6 @@ kind: Kustomization
 
 resources:
   - source-helmrepo-uptime-kuma.yaml
-  - helmrelease.yaml 
+  - mariadb-sealed.yaml
+  - mariadb.yaml
+  - helmrelease.yaml

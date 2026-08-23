@@ -9,16 +9,26 @@ spec:
   chart:
     spec:
       chart: uptime-kuma
-      version: 2.25.0
+      version: 4.2.0
       sourceRef:
         kind: HelmRepository
         name: dirsigler-uptime-kuma
         namespace: monitoring
   releaseName: uptime-kuma
   values:
-    image:
-      repository: louislam/uptime-kuma
-      tag: "2-slim"
+    externalDatabase:
+      enabled: true
+      type: mariadb
+      hostname: uptime-kuma-mariadb.monitoring.svc.cluster.local
+      port: 3306
+      database: uptime_kuma
+      existingSecret: uptime-kuma-mariadb
+      existingSecretUsernameKey: username
+      existingSecretPasswordKey: password
+    # NOTE: no image.tag override here on purpose. The old `tag: "2-slim"`
+    # was a floating tag that silently rolled this install from v1 to v2 on
+    # 2025-11-26. The chart pins the app version instead; Renovate bumps the
+    # chart, so major upgrades arrive as a reviewable PR.
     useDeploy: false
     ingress:
       enabled: true
