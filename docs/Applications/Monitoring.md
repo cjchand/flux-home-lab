@@ -85,8 +85,15 @@ the alerts mean different things:
 
 | Monitor | Type | Checks |
 |---|---|---|
+| `Teslamate` | http, 60s | The web UI is up (process liveness) |
 | `Postgres - Teslamate` | postgres, 60s | Postgres is reachable and accepting auth (`SELECT 1`) |
-| `Teslamate - Data Freshness` | postgres, 300s | TeslaMate is actually ingesting data |
+| `Teslamate - Data Freshness` | postgres, 300s | Data is flowing while a car is online |
+| `Teslamate - Tesla API Reachable` | keyword, 1800s | TeslaMate can still reach Tesla's API — see [notes](./monitor-queries/teslamate-tesla-api-reachable.md) |
+
+Note the database alone **cannot** distinguish "car is asleep" from "pulls are
+failing" — both produce zero writes. That gap is why the Loki-backed token
+refresh monitor exists; see its notes for the coverage matrix and the one
+failure mode nothing can catch.
 
 The freshness query lives in
 [`monitor-queries/teslamate-data-freshness.sql`](./monitor-queries/teslamate-data-freshness.sql),
