@@ -77,3 +77,32 @@ restart silently crossed a major version and enabled v2's aggregate tables.
 The HelmRelease now sets **no** `image.tag`, letting the chart pin the app
 version. Renovate then surfaces major upgrades as a reviewable PR instead of
 landing them on the next restart. Apply the same rule to other apps.
+
+### TeslaMate data freshness check
+
+Two separate monitors cover TeslaMate's database, deliberately kept apart so
+the alerts mean different things:
+
+| Monitor | Type | Checks |
+|---|---|---|
+| `Postgres - Teslamate` | postgres, 60s | Postgres is reachable and accepting auth (`SELECT 1`) |
+| `Teslamate - Data Freshness` | postgres, 300s | TeslaMate is actually ingesting data |
+
+The freshness query lives in
+[`monitor-queries/teslamate-data-freshness.sql`](./monitor-queries/teslamate-data-freshness.sql),
+kept in git because monitor configuration otherwise exists only inside the
+Uptime Kuma database.
+
+Two things about it are non-obvious:
+
+**Uptime Kuma's postgres monitor ignores the result set.** It only fails if the
+query throws (`server/monitor-types/postgres.js` awaits the query and then
+unconditionally sets status UP). So the check is a `DO $$ ... RAISE EXCEPTION`
+block; the exception text becomes the heartbeat message and the Slack alert.
+
+**A plain "is the newest row recent?" check would false-alarm nightly.**
+TeslaMate writes nothing while a car is asleep or offline — during one sample
+both cars had been quiet for ~8 hours, entirely normally. The query therefore
+only alerts when a car's open `states` row says `online` (data *is* expected)
+but its newest position is older than 15 minutes. Position cadence while online
+is 1-6 seconds, so that threshold is a wide margin.
