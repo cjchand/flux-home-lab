@@ -181,21 +181,43 @@ data:
       mode: motion
 
     # Recordings are stored under /media/frigate, which is mounted from the NFS PVC.
-    # Storage math: ~5–8 GB/camera/day at motion-only mode.
-    # 7-day retain on 5 cameras ≈ 200–280 GB. Size the NAS share accordingly.
+    #
+    # Storage math, measured 2026-08-30 (NOT estimated — the earlier 5–8 GB/camera/day
+    # figure in this file was wrong by ~4x):
+    #   ~32 GB/camera/day for `motion` retention (doorbell ~42 GB), so ~160 GB/day
+    #   across 5 cameras. `motion.days: 7` therefore cost 1.2 TB and nearly filled
+    #   the NAS.
+    #
+    # Why `motion` retention is so expensive here: it keeps any segment whose motion
+    # count is > 0, and on these cameras that is *every* segment. A survey of 318,916
+    # retained segments found zero with motion == 0, so `motion` mode is currently
+    # equivalent to continuous 24/7 recording. Until motion.threshold/contour_area are
+    # tuned per camera, treat `motion.days` as "days of continuous recording" when
+    # doing storage math.
+    #
+    # By contrast, alerts/detections retention is nearly free: segments 8–13 days old
+    # (past the motion window, inside the event window) total only ~150 MB/day, because
+    # there are just a few hundred person events per fortnight. That is why the event
+    # windows below are generous and the motion window is short.
+    #
+    # Current cost: ~320 GB (2 days motion) + ~5 GB (30 days of events).
     record:
       enabled: true
       motion:
-        days: 7
+        # A 48-hour scrub-back buffer. Raising this costs ~160 GB per extra day.
+        days: 2
       alerts:
         retain:
-          days: 14
+          days: 30
           mode: motion
       detections:
         retain:
-          days: 14
+          days: 30
           mode: motion
 
+    # Kept in step with the alert/detection retention above. If snapshots expire
+    # first, the events list shows entries whose thumbnails have already been
+    # deleted. Snapshots are single JPEGs, so this costs very little.
     snapshots:
       retain:
-        default: 14
+        default: 30

@@ -9,5 +9,18 @@ spec:
   storageClassName: nfs-client
   resources:
     requests:
-      # ~5–8 GB/camera/day at motion-only mode; 7-day retain × 3 cameras ≈ 160 GB minimum.
+      # NOTE: nfs-client (nfs-subdir-external-provisioner) does NOT enforce this
+      # request — it just creates a subdirectory on the share. This value is
+      # documentation, not a quota. In Aug 2026 Frigate grew to 1.2 TB against this
+      # same 200Gi request and nearly filled the NAS. If you want a real ceiling,
+      # set a quota on the NAS share itself.
+      #
+      # Measured usage (2026-08-30): ~32 GB/camera/day of retained motion footage.
+      # With record.motion.days=2 across 5 cameras that is ~320 GB, plus ~5 GB for
+      # 30 days of alert/detection events. See configmap-frigate.yaml for the math.
+      #
+      # Left at 200Gi deliberately even though real usage exceeds it: this provisioner
+      # is not a CSI driver, so there is no resizer to complete an expansion, and
+      # bumping the number risks parking the PVC in a pending-resize condition for no
+      # benefit. Do not "fix" this to match actual usage.
       storage: 200Gi
