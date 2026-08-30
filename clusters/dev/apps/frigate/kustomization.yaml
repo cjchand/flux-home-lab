@@ -6,7 +6,6 @@ resources:
   # Frigate NVR — seal secret-frigate.yaml before deploying (see README.md)
   # MQTT broker lives in clusters/dev/apps/mosquitto/ (shared with Teslamate and others)
   - sealed-secret-frigate.yaml
-  - configmap-frigate.yaml
   - pvc-frigate-config.yaml
   - pvc-frigate-recordings.yaml
   - deployment-frigate.yaml
@@ -15,3 +14,22 @@ resources:
   - configmap-overnight-summary.yaml
   - cronjob-overnight-summary.yaml
   - sealed-secret-overnight-summary.yaml
+
+# frigate-config is generated rather than checked in as a static ConfigMap so that
+# Kustomize appends a content hash to its name. That hash flows into the Deployment's
+# volume reference, so editing config.yml changes the pod spec *in Git* and Flux rolls
+# the Deployment automatically.
+#
+# This matters because Frigate only reads its config at startup (the init container
+# copies it onto the config PVC). With a static ConfigMap, a config change updated the
+# ConfigMap but left the pod spec untouched, so no rollout happened and Frigate kept
+# running the old config indefinitely. `kubectl rollout restart` is NOT a workaround:
+# it stamps a restartedAt annotation that is not in Git, and Flux reverts it on the
+# next reconcile.
+#
+# Old hashed ConfigMaps are cleaned up by the flux-system Kustomization's prune: true.
+configMapGenerator:
+  - name: frigate-config
+    namespace: frigate
+    files:
+      - config.yml
