@@ -7,47 +7,28 @@ spec:
   interval: 5m
   chart:
     spec:
-      chart: ./charts/homepage
-      version: "1.4.0"
+      chart: homepage
+      version: "5.2.0"
       sourceRef:
-        kind: GitRepository
+        kind: HelmRepository
         name: monsterrr
-        namespace: flux-system
+        namespace: homepage
   values:
+    # Image tag intentionally unset: it defaults to the chart appVersion, so the
+    # app version moves only when the pinned chart version above moves.
     image:
-      repository: ghcr.io/gethomepage/homepage
-      tag: latest
+      registry: ghcr.io
+      repository: gethomepage/homepage
       pullPolicy: IfNotPresent
 
-    initContainers:
-      - name: init-chown-data
-        image: busybox
-        command: ["sh", "-c", "chown -R 1000:1000 /app/config && chmod -R 755 /app/config"]
-        volumeMounts:
-          - name: config
-            mountPath: /app/config
-
-    volumes:
-      - name: config
-        persistentVolumeClaim:
-          claimName: homepage-config
-      - name: k8s-config
-        configMap:
-          name: homepage
-
-    volumeMounts:
-      - name: config
-        mountPath: /app/config
-      - name: k8s-config
-        mountPath: /app/config
-
-    extraEnv:
-      - name: HOMEPAGE_ALLOWED_HOSTS
-        value: "homepage.internal"
+    # The chart derives HOMEPAGE_ALLOWED_HOSTS from ingress.hosts automatically;
+    # this only adds the host served by homepage-traefik-ingress.yaml.
+    config:
+      allowedHosts:
+        - homepage-traefik.internal
 
     service:
       port: 3000
-      targetPort: 3000
 
     ingress:
       enabled: true
@@ -64,7 +45,42 @@ spec:
       tls:
         - hosts:
             - homepage.internal
-          secretName: homepage-tls 
+          secretName: homepage-tls
+
+    # The chart mounts its own emptyDir at /app/config. Config files are layered
+    # in individually by subPath so they nest inside it rather than colliding
+    # with it -- a whole-directory mount named "config" is what broke the 4.x->5.x
+    # upgrade.
+    volumes:
+      - name: homepage-files
+        configMap:
+          name: homepage
+
+    volumeMounts:
+      - name: homepage-files
+        mountPath: /app/config/settings.yaml
+        subPath: settings.yaml
+      - name: homepage-files
+        mountPath: /app/config/services.yaml
+        subPath: services.yaml
+      - name: homepage-files
+        mountPath: /app/config/widgets.yaml
+        subPath: widgets.yaml
+      - name: homepage-files
+        mountPath: /app/config/bookmarks.yaml
+        subPath: bookmarks.yaml
+      - name: homepage-files
+        mountPath: /app/config/kubernetes.yaml
+        subPath: kubernetes.yaml
+      - name: homepage-files
+        mountPath: /app/config/docker.yaml
+        subPath: docker.yaml
+      - name: homepage-files
+        mountPath: /app/config/custom.css
+        subPath: custom.css
+      - name: homepage-files
+        mountPath: /app/config/custom.js
+        subPath: custom.js
 
     rbac:
       enabled: true

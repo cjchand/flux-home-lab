@@ -28,5 +28,4 @@ Homepage uses a ConfigMap for configuration and integrates with Traefik for ingr
 
 - **Homepage**: Main dashboard application
 - **ConfigMap**: Configuration for services and layout
-- **PersistentVolume**: Storage for user preferences and customizations
 - **Traefik Ingress**: External access and SSL termination 
