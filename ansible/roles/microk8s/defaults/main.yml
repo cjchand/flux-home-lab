@@ -1,5 +1,5 @@
 ---
-microk8s_channel: "1.31/stable"
+microk8s_channel: "1.33/stable"
 
 microk8s_addons_enabled:
   - dns

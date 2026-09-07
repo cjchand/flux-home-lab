@@ -1,6 +1,19 @@
 ---
 # Rolling microk8s upgrade - one node at a time
 # Update microk8s_channel in group_vars/microk8s.yml before running
+#
+# snap will not skip a minor version, so this moves the cluster exactly one
+# channel per run. Before bumping the channel, check the target release's
+# removed APIs (pluto / kubent) and the support matrix of anything that talks
+# to the API server -- cert-manager in particular.
+#
+# Auto-refresh is the other hazard: with the ha-cluster addon dqlite needs 2 of
+# 3 nodes, and snapd refreshing all three on its own timer takes quorum down
+# regardless of what this playbook does. Hold it on every node first:
+#     sudo snap refresh --hold microk8s
+#
+# The drain deliberately bypasses PodDisruptionBudgets rather than working
+# around them -- see the comment on that task for why.
 
 - name: Rolling microk8s upgrade
   hosts: microk8s
@@ -20,16 +33,41 @@
       ansible.builtin.set_fact:
         needs_upgrade: "{{ current_channel.stdout != microk8s_channel }}"
 
+    - name: Refuse to move the cluster backwards
+      # microk8s_channel drifted to 1.31 while the nodes ran 1.32.13. Because
+      # "needs upgrade" is just a string inequality, a stale value here reads as
+      # work to do and would walk every node down a minor. snap has no
+      # downgrade path for microk8s, so catch it before the drain, not after.
+      ansible.builtin.assert:
+        that:
+          - current_channel.stdout.split('/')[0] is version(microk8s_channel.split('/')[0], '<=')
+        fail_msg: >-
+          Node tracks {{ current_channel.stdout }} but microk8s_channel is
+          {{ microk8s_channel }}. Update microk8s_channel in
+          group_vars/microk8s.yml to match or exceed what the nodes run.
+      when: needs_upgrade
+
     - name: Cordon node before upgrade
       ansible.builtin.command: microk8s kubectl cordon {{ inventory_hostname }}
       when: needs_upgrade
       delegate_to: "{{ groups['microk8s_primary'][0] }}"
 
     - name: Drain node before upgrade
+      # --disable-eviction deletes pods outright instead of going through the
+      # eviction API, which is what lets this get past PodDisruptionBudgets.
+      # coder-postgresql-primary and prometheus-k8s are single-replica workloads
+      # with minAvailable: 1, so their allowed disruptions is permanently 0 and
+      # eviction can never succeed -- the drain would just burn its timeout and
+      # fail on two of the three nodes. Brief downtime for those is accepted
+      # here in exchange for not having to tear down and rebuild the PDBs.
+      #
+      # --force additionally removes pods with no controller behind them.
       ansible.builtin.command: >
         microk8s kubectl drain {{ inventory_hostname }}
         --ignore-daemonsets
         --delete-emptydir-data
+        --disable-eviction
+        --force
         --timeout=300s
       when: needs_upgrade
       delegate_to: "{{ groups['microk8s_primary'][0] }}"
@@ -63,5 +101,19 @@
       until: "'Ready' in node_status.stdout"
       retries: 10
       delay: 10
+      when: needs_upgrade
+      delegate_to: "{{ groups['microk8s_primary'][0] }}"
+
+    - name: Confirm every node is Ready before draining the next one
+      # serial: 1 only preserves dqlite quorum if the node just upgraded
+      # actually rejoined. Stop here rather than draining a second node into a
+      # cluster that is already down one.
+      ansible.builtin.shell:
+        cmd: set -o pipefail && microk8s kubectl get nodes --no-headers | grep -c ' Ready'
+      args:
+        executable: /bin/bash
+      register: ready_count
+      changed_when: false
+      failed_when: ready_count.stdout | int < groups['microk8s'] | length
       when: needs_upgrade
       delegate_to: "{{ groups['microk8s_primary'][0] }}"

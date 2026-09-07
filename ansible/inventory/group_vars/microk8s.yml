@@ -1,6 +1,13 @@
 ---
 # microk8s snap channel (e.g., 1.29/stable, 1.30/stable)
-microk8s_channel: "1.31/stable"
+#
+# Keep this in step with what the nodes actually run. It drifted to 1.31 while
+# the cluster was on 1.32.13, and upgrade-microk8s.yml compares this value to
+# `snap info` to decide whether to act -- so a stale value here reads as "needs
+# upgrade" and walks the cluster *backwards*.
+#
+# snap will not skip a minor: go 1.32 -> 1.33 -> 1.34, one channel per run.
+microk8s_channel: "1.33/stable"
 
 # Addons managed by Ansible (microk8s built-in)
 microk8s_addons_enabled:
