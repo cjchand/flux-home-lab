@@ -72,6 +72,21 @@ spec:
     # Home Assistant configuration
     configuration:
       enabled: true
+      # Without this the chart writes configuration.yaml only when the file is
+      # absent, so on this already-initialised volume everything templated below
+      # was silently ignored. forceInit deep-merges the template into the file on
+      # every start instead, after taking a timestamped backup (10 are kept).
+      #
+      # Scope is exactly one file. automations.yaml (currently 35 lines of
+      # hand-written automations), scripts.yaml, scenes.yaml, custom_components
+      # and the whole of .storage -- integrations, devices, entities, dashboards
+      # -- are neither read nor written by it.
+      #
+      # The trade: configuration.yaml is now owned by this repo. Keys that exist
+      # only on disk survive the merge, but anything also defined here takes the
+      # value from here on the next pod start, so hand edits to those keys will
+      # not stick. Put them in templateConfig instead.
+      forceInit: true
       trusted_proxies:
         - 192.168.86.0/24
         - 10.0.0.0/8
@@ -95,40 +110,102 @@ spec:
             - {{ . | quote }}
             {{- end }}
 
-        # Exposes the Reolink doorbell to HomeKit so it rings on the Apple TV.
+        # HomeKit Bridge, managed here rather than in the UI.
         #
-        # mode: accessory (not bridge) — HomeKit does not allow cameras through a
-        # bridge, so a camera is always a separately paired accessory. Giving it its
-        # own single-accessory instance keeps that explicit and keeps the doorbell
-        # independent of anything else exposed later.
+        # linked_doorbell_sensor is the reason this lives in YAML at all: it is the
+        # field that promotes a plain HomeKit camera to a Video Doorbell, so tvOS
+        # overlays the live feed when the button is pressed. The HomeKit options
+        # flow does not expose it, and the auto-linker only picks up a doorbell
+        # from an `event` entity on the same device as the camera -- Reolink
+        # publishes a plain binary_sensor with no device class, and unlike motion
+        # there is no binary_sensor fallback. YAML is the only route.
         #
-        # linked_doorbell_sensor is what turns a plain HomeKit camera into a Video
-        # Doorbell — it is the reason tvOS overlays the live feed on the button press
-        # rather than just listing the camera in the Home app.
+        # Cameras must each be mode: accessory. HomeKit does not carry cameras over
+        # a bridge, so every camera is a separately paired accessory with its own
+        # port and pairing code; only the non-camera entities below share a bridge.
         #
-        # Entity IDs below assume the Reolink integration is added with the device
-        # named "Doorbell": it creates camera.doorbell_fluent (sub stream),
-        # camera.doorbell_clear (main stream) and binary_sensor.doorbell_visitor
-        # (physical button press). Verify in Developer Tools → States and correct
-        # these if the device is named differently.
+        # Streams come from Frigate rather than straight from the cameras: Frigate
+        # already holds those connections open, so this avoids a second pull from
+        # each device. video_codec: copy passes the H.264 through untouched, which
+        # matters because these nodes run Frigate detection on CPU alone and have
+        # no headroom to transcode.
         homekit:
           - name: Doorbell
             mode: accessory
-            port: 21064
+            port: 21065
             filter:
               include_entities:
-                - camera.doorbell_fluent
+                - camera.camera_doorbell
             entity_config:
-              camera.doorbell_fluent:
-                # The sub stream, not camera.doorbell_clear: HomeKit only asks for
-                # ~720p, and these nodes are CPU-only detectors (see the Frigate
-                # config) with no headroom to transcode the 4K main stream.
-                #
-                # copy passes the camera's H.264 through untouched, so HomeKit
-                # streaming costs no CPU. If the stream fails to open on the Apple
-                # TV, drop this line and let HA transcode.
+              camera.camera_doorbell:
                 video_codec: copy
+                linked_motion_sensor: binary_sensor.camera_doorbell_motion
+                # The button press, from the Reolink integration -- not Frigate,
+                # which only ever reports motion and person detection.
                 linked_doorbell_sensor: binary_sensor.doorbell_visitor
+
+          - name: Kitchen Camera
+            mode: accessory
+            port: 21066
+            filter:
+              include_entities:
+                - camera.camera_kitchen
+            entity_config:
+              camera.camera_kitchen:
+                video_codec: copy
+                linked_motion_sensor: binary_sensor.camera_kitchen_motion
+
+          - name: Living Room Camera
+            mode: accessory
+            port: 21067
+            filter:
+              include_entities:
+                - camera.camera_living_room
+            entity_config:
+              camera.camera_living_room:
+                video_codec: copy
+                linked_motion_sensor: binary_sensor.camera_living_room_motion
+
+          - name: Workout Room Camera
+            mode: accessory
+            port: 21068
+            filter:
+              include_entities:
+                - camera.camera_workout_room
+            entity_config:
+              camera.camera_workout_room:
+                video_codec: copy
+                linked_motion_sensor: binary_sensor.camera_workout_room_motion
+
+          - name: Garage Camera
+            mode: accessory
+            port: 21069
+            filter:
+              include_entities:
+                - camera.camera_garage
+            entity_config:
+              camera.camera_garage:
+                video_codec: copy
+                linked_motion_sensor: binary_sensor.camera_garage_motion
+
+          # Everything that is not a camera rides one bridge, so it pairs once.
+          - name: HASS Bridge
+            mode: bridge
+            port: 21064
+            filter:
+              include_domains:
+                - light
+                - switch
+                - fan
+                - cover
+                - lock
+                - climate
+                - humidifier
+                - media_player
+                - remote
+                - vacuum
+                - water_heater
+                - alarm_control_panel
 
         automation: !include automations.yaml
         script: !include scripts.yaml
