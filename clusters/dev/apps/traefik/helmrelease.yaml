@@ -54,12 +54,21 @@ spec:
         gethomepage.dev/name: "Traefik"
         gethomepage.dev/icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Traefik.logo.svg/1200px-Traefik.logo.svg.png"
 
-    # Entrypoints configuration for HTTP->HTTPS redirect
-    entryPoints:
+    # HTTP->HTTPS redirect.
+    #
+    # This lived under a top-level `entryPoints:` key until chart 41, which was
+    # not a key this chart ever read -- it was silently ignored, so the redirect
+    # never actually worked: port 80 answered 404 rather than redirecting. Chart
+    # 41 added schema validation, which is what turned a silent no-op into a
+    # visible upgrade failure.
+    #
+    # The chart expects this under ports.web, and the key is `entryPoint`
+    # (singular, capital P), not `entrypoint`.
+    ports:
       web:
         http:
           redirections:
-            entrypoint:
+            entryPoint:
               to: websecure
               scheme: https
               permanent: true
