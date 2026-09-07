@@ -1,5 +1,10 @@
 # Homepage
 
+> **Retired 2026-09-07.** Homepage is no longer deployed. Its configuration was
+> moved to `clusters/disabled/apps/homepage/` rather than deleted, so it can be
+> restored by moving it back under `clusters/dev/apps/` and re-adding it to
+> `clusters/dev/apps/kustomization.yaml`. This page is kept for reference.
+
 **Purpose**: Dashboard for accessing all services
 
 Homepage is a clean, simple, and fast dashboard for accessing all your services. It provides a centralized landing page with quick access to all applications running in your home lab.

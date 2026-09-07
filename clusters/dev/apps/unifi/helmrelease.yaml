@@ -50,11 +50,6 @@ spec:
         traefik.ingress.kubernetes.io/router.entrypoints: websecure
         traefik.ingress.kubernetes.io/router.tls: "true"
         cert-manager.io/cluster-issuer: internal-ca
-        gethomepage.dev/enabled: "true"
-        gethomepage.dev/name: UniFi
-        gethomepage.dev/group: Network
-        gethomepage.dev/icon: unifi.png
-        gethomepage.dev/description: Network Controller
       tls:
         enabled: true
         secretName: unifi-tls

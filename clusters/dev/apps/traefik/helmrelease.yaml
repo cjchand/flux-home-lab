@@ -47,12 +47,6 @@ spec:
     # Service configuration
     service:
       type: LoadBalancer
-      annotations:
-        gethomepage.dev/enabled: "true"
-        gethomepage.dev/description: Traefik Dashboard
-        gethomepage.dev/group: Infrastructure
-        gethomepage.dev/name: "Traefik"
-        gethomepage.dev/icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Traefik.logo.svg/1200px-Traefik.logo.svg.png"
 
     # HTTP->HTTPS redirect.
     #

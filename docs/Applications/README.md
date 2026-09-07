@@ -30,5 +30,5 @@ The home lab currently hosts the following applications and services, organized 
 ### Applications
 - **[Teslamate](./TeslaMate.md)** - Tesla vehicle data logging and visualization
 - **[Tandoor Recipes](./Tandoor-Recipes.md)** - Recipe management and meal planning
-- **[Homepage](./Homepage.md)** - Dashboard for accessing all services
+- **[Homepage](./Homepage.md)** - Dashboard for accessing all services *(retired 2026-09-07; config in `clusters/disabled/`)*
 - **[UniFi Controller](./UniFi-Controller.md)** - Network management for Ubiquiti devices

@@ -48,11 +48,6 @@ spec:
         traefik.ingress.kubernetes.io/router.entrypoints: websecure
         traefik.ingress.kubernetes.io/router.tls: "true"
         cert-manager.io/cluster-issuer: internal-ca
-        gethomepage.dev/enabled: "true"
-        gethomepage.dev/description: Home Assistant
-        gethomepage.dev/group: Automation
-        gethomepage.dev/name: "Home Assistant"
-        gethomepage.dev/icon: "https://raw.githubusercontent.com/home-assistant/assets/master/logo/logo.png"
       hosts:
         - host: homeassistant.internal
           paths:

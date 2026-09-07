@@ -59,11 +59,6 @@ spec:
           traefik.ingress.kubernetes.io/router.entrypoints: websecure
           traefik.ingress.kubernetes.io/router.tls: "true"
           cert-manager.io/cluster-issuer: internal-ca
-          gethomepage.dev/enabled: "true"
-          gethomepage.dev/description: Tandoor Recipes
-          gethomepage.dev/group: Lifestyle
-          gethomepage.dev/name: "Tandoor Recipes"
-          gethomepage.dev/icon: "https://tandoor.dev/static/assets/brand_logo.png"
         hosts:
           - host: recipes.internal
             paths:

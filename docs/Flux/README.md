@@ -7,8 +7,6 @@ All of the Flux-related assets are in the [dev cluster directory](../../clusters
 │   ├── dev
 │   │   ├── apps
 │   │   │   ├── homeassistant/
-│   │   │   ├── homebridge/
-│   │   │   ├── homepage/
 │   │   │   ├── loki-stack/
 │   │   │   ├── metallb/
 │   │   │   ├── tandoor/
