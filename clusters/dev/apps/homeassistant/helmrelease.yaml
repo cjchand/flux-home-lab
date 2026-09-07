@@ -189,23 +189,46 @@ spec:
                 linked_motion_sensor: binary_sensor.camera_garage_motion
 
           # Everything that is not a camera rides one bridge, so it pairs once.
+          #
+          # Domains are included and the noise excluded, rather than listing the
+          # wanted entities outright. Several of the Meross plugs are seasonal --
+          # the Christmas tree ones are unplugged most of the year, and meross_lan
+          # only adopts what is powered on. An allowlist would mean those come
+          # back in December, get picked up by HA, and then silently never reach
+          # HomeKit until someone remembered to edit this file. Excluding instead
+          # means anything new shows up on its own.
+          #
+          # What that leaves is the Meross outlets and the garage door. What it
+          # drops is entirely config toggles that have no business in the Home
+          # app: 45 Frigate per-camera switches (detect/record/snapshots), 10
+          # Reolink camera settings, the HACS pre-release flags, and the Meross
+          # garage tuning switches. The light.*_dnd entities are excluded for the
+          # same reason -- they are the do-not-disturb status LEDs on the Meross
+          # units, not lamps, and would otherwise appear as four bulbs.
+          #
+          # climate, media_player and remote are left out of the domain list
+          # altogether: those are the LG fridge, which HomeKit would render as a
+          # thermostat, and the Apple TV itself -- which is the Home Hub, so
+          # publishing it back into HomeKit through HA is circular.
           - name: HASS Bridge
             mode: bridge
             port: 21064
             filter:
               include_domains:
-                - light
                 - switch
-                - fan
+                - light
                 - cover
+                - fan
                 - lock
-                - climate
-                - humidifier
-                - media_player
-                - remote
-                - vacuum
-                - water_heater
-                - alarm_control_panel
+              exclude_entity_globs:
+                - switch.camera_*
+                - switch.doorbell_*
+                - switch.reolink_*
+                - switch.*_pre_release
+                - switch.garage_door_*
+                - light.*_dnd
+              exclude_entities:
+                - switch.kitchen_refrigerator_express_mode
 
         automation: !include automations.yaml
         script: !include scripts.yaml
