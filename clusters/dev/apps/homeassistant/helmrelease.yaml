@@ -27,10 +27,18 @@ spec:
       - name: TZ
         value: UTC
 
-    # hostNetwork disabled — not needed until mDNS device discovery is required
-    # (Chromecast, Apple TV, etc.). Re-enable with dnsPolicy: ClusterFirstWithHostNet
-    # if local network discovery integrations are added.
-    hostNetwork: false
+    # hostNetwork is required by the HomeKit Bridge (see `homekit:` below). HomeKit
+    # pairing is mDNS/Bonjour, so the bridge must advertise on the same L2 segment as
+    # the Apple TV, which a pod on the Calico overlay cannot do. Homebridge runs the
+    # same way for the same reason.
+    #
+    # Consequence: HA binds 8123 and 21064 directly on whichever node it lands on, so
+    # those ports must stay free cluster-wide. The Traefik ingress below is unaffected
+    # — the Service still selects the pod, whose IP is now the node IP.
+    hostNetwork: true
+    # Required alongside hostNetwork so HA still resolves in-cluster Services
+    # (mosquitto.mqtt.svc, frigate.frigate.svc) and not just host DNS.
+    dnsPolicy: ClusterFirstWithHostNet
 
     # Ingress configuration
     ingress:
@@ -86,6 +94,41 @@ spec:
             {{- range .Values.configuration.trusted_proxies }}
             - {{ . | quote }}
             {{- end }}
+
+        # Exposes the Reolink doorbell to HomeKit so it rings on the Apple TV.
+        #
+        # mode: accessory (not bridge) — HomeKit does not allow cameras through a
+        # bridge, so a camera is always a separately paired accessory. Giving it its
+        # own single-accessory instance keeps that explicit and keeps the doorbell
+        # independent of anything else exposed later.
+        #
+        # linked_doorbell_sensor is what turns a plain HomeKit camera into a Video
+        # Doorbell — it is the reason tvOS overlays the live feed on the button press
+        # rather than just listing the camera in the Home app.
+        #
+        # Entity IDs below assume the Reolink integration is added with the device
+        # named "Doorbell": it creates camera.doorbell_fluent (sub stream),
+        # camera.doorbell_clear (main stream) and binary_sensor.doorbell_visitor
+        # (physical button press). Verify in Developer Tools → States and correct
+        # these if the device is named differently.
+        homekit:
+          - name: Doorbell
+            mode: accessory
+            port: 21064
+            filter:
+              include_entities:
+                - camera.doorbell_fluent
+            entity_config:
+              camera.doorbell_fluent:
+                # The sub stream, not camera.doorbell_clear: HomeKit only asks for
+                # ~720p, and these nodes are CPU-only detectors (see the Frigate
+                # config) with no headroom to transcode the 4K main stream.
+                #
+                # copy passes the camera's H.264 through untouched, so HomeKit
+                # streaming costs no CPU. If the stream fails to open on the Apple
+                # TV, drop this line and let HA transcode.
+                video_codec: copy
+                linked_doorbell_sensor: binary_sensor.doorbell_visitor
 
         automation: !include automations.yaml
         script: !include scripts.yaml
