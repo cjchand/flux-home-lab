@@ -74,7 +74,14 @@ spec:
       pullPolicy: IfNotPresent
       pullSecrets: []
       registry: docker.io
-      repository: bitnami/postgresql
+      # docker.io/bitnami/postgresql:17.5.0-debian-12-r19 now 404s -- Bitnami
+      # withdrew its public catalogue. This pod is still running only because
+      # the image sits in a node's local cache; any reschedule would have failed
+      # the pull exactly as tandoor's database did after the microk8s upgrade.
+      # bitnamilegacy is Bitnami's unmaintained archive and still serves the tag.
+      # Treat this as a stopgap: cloudnative-pg is already installed in
+      # cluster-services and is where this should end up.
+      repository: bitnamilegacy/postgresql
       tag: 17.5.0-debian-12-r19
     kubeVersion: ""
     ldap:

@@ -108,6 +108,21 @@ spec:
     # @default -- See [values.yaml](./values.yaml)
     postgresql:
       enabled: true
+      # Bitnami retired its public Docker Hub catalogue and the tag this subchart
+      # defaults to, 16.2.0-debian-11-r1, now 404s on docker.io/bitnami. It kept
+      # running here only from each node's local image cache; the microk8s 1.33
+      # upgrade drained the node, the pod was rescheduled, the pull failed and
+      # the database has been in ImagePullBackOff since -- which is what made
+      # recipes.internal return 503.
+      #
+      # bitnamilegacy is Bitnami's archive of the withdrawn images and still
+      # serves this exact tag. It is a stopgap, not a home: nothing there is
+      # maintained or patched. The real fix is moving off these images, and the
+      # cloudnative-pg operator already running in cluster-services is the
+      # obvious destination.
+      image:
+        repository: bitnamilegacy/postgresql
+        tag: 16.2.0-debian-11-r1
       auth:
         database: tandoor
         postgresPassword: changeme
