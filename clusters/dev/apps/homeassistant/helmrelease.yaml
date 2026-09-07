@@ -82,10 +82,21 @@ spec:
       # and the whole of .storage -- integrations, devices, entities, dashboards
       # -- are neither read nor written by it.
       #
-      # The trade: configuration.yaml is now owned by this repo. Keys that exist
-      # only on disk survive the merge, but anything also defined here takes the
-      # value from here on the next pod start, so hand edits to those keys will
-      # not stick. Put them in templateConfig instead.
+      # The trade: configuration.yaml is now owned by this repo. Keys present
+      # only on disk survive the merge; scalars and maps defined here overwrite
+      # what is on disk, so hand edits to those will not stick.
+      #
+      # Lists are the sharp edge. The merge is `yq ... *d`, which combines arrays
+      # element-wise by index rather than replacing them, so SHORTENING a list
+      # here does not shorten it on disk -- entries past the new length survive
+      # from the previous version indefinitely. Trimming the bridge's
+      # include_domains from twelve entries to five left the last seven in place
+      # on disk, still exposing the LG fridge and the Apple TV to HomeKit, and
+      # deleting and reimporting the config entry did not clear it because the
+      # stale values were being re-read from the file each start. To remove an
+      # item from a list here, delete /config/configuration.yaml so the template
+      # is copied fresh -- the init script keeps ten timestamped backups, and the
+      # next restart rebuilds the file.
       forceInit: true
       trusted_proxies:
         - 192.168.86.0/24
