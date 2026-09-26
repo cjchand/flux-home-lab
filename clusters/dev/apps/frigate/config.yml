@@ -23,25 +23,40 @@ detectors:
     type: openvino
     device: GPU
 
-# The bundled ssdlite_mobilenet_v2 model IS still physically present in the
-# Frigate 0.17.2 image at /openvino-model/ (confirmed: the .xml/.bin files are
-# on disk) — but as of this version nothing in Frigate's own code references
-# that path automatically to populate model.path. It was auto-wired in older
-# Frigate releases; that wiring is gone here even though the file remains. So
-# it has to be pointed at explicitly, once, and then it just works.
+# YOLOv9-t at 320x320, replacing the bundled ssdlite_mobilenet_v2 (proven working
+# first — see git history — before this upgrade) for better detection accuracy.
+# yolov9t chosen over the docs' general starting recommendation of yolov9s: this
+# is a genuinely weak, low-power Gen9.5 iGPU (24 EUs), and yolov9t is what the
+# Frigate community actually runs on comparably weak Intel iGPUs (verified
+# against a real working example, not just picked as a guess).
 #
-# Only path/labelmap_path/width/height need to be set — the model's actual
-# input layer (read directly from the .xml: shape 1,300,300,3, dtype u8) is
-# already an exact match for Frigate's schema defaults: input_tensor: nhwc,
-# input_pixel_format: rgb, input_dtype: int, model_type: ssd. This is almost
-# certainly not a coincidence — those defaults look chosen to match this exact
-# model. Model swap (e.g. to YOLOv9 for better accuracy) is a later, separate
-# decision once this is proven working end-to-end.
+# model_type: yolo-generic — NOT "yolov9". That looks like the obviously-correct
+# value and is invalid in Frigate 0.17: it silently drops the detector into a
+# safe-mode CPU fallback with garbage detections instead of erroring, which is a
+# much worse failure to debug than a crash. Confirmed against
+# frigate/detectors/detector_config.py's ModelTypeEnum directly — yolo-generic
+# is the only valid value for any Ultralytics YOLO export (v8/v9/v11/etc).
+#
+# input_tensor: nchw and input_dtype: float are verified directly from the
+# exported .onnx file's input node (shape [1,3,320,320], FLOAT) — not assumed.
+# input_pixel_format: bgr is not independently verifiable from the ONNX file
+# itself (it describes a preprocessing convention, not something the file
+# encodes); taken from a working real-world OpenVINO+YOLOv9t setup on similarly
+# weak Intel iGPU hardware.
+#
+# The .onnx file itself is NOT committed to the repo — binaries don't belong in
+# git history. It's fetched by an init container in deployment-frigate.yaml from
+# a checksummed GitHub Release asset on this same repo, onto the config PVC, on
+# first pod start only (see that file's comment for the full mechanism).
 model:
-  path: /openvino-model/ssdlite_mobilenet_v2.xml
-  labelmap_path: /openvino-model/coco_91cl_bkgr.txt
-  width: 300
-  height: 300
+  path: /config/model_cache/yolov9t-320.onnx
+  model_type: yolo-generic
+  width: 320
+  height: 320
+  input_tensor: nchw
+  input_pixel_format: bgr
+  input_dtype: float
+  labelmap_path: /labelmap/coco-80.txt
 
 ffmpeg:
   # VAAPI, not QSV: VAAPI is the correct path for Gen9.5 integrated graphics.

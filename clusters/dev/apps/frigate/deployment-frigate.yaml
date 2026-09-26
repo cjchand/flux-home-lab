@@ -44,6 +44,46 @@ spec:
               mountPath: /config
             - name: config-seed
               mountPath: /config-seed
+        # Fetches the OpenVINO detection model onto the config PVC if it isn't already
+        # there, or if the checksum doesn't match. The model is NOT committed to the repo
+        # (binary artifacts don't belong in git history) — it's hosted as a checksummed
+        # GitHub Release asset on this same repo instead:
+        # https://github.com/cjchand/flux-home-lab/releases/tag/frigate-model-yolov9t-320-v1
+        #
+        # This only downloads once: the PVC persists across pod restarts, and the
+        # checksum check means re-fetching only happens if the file is missing or
+        # corrupted, not on every pod start. If the PVC is ever rebuilt, this
+        # regenerates the model automatically with no manual step.
+        #
+        # curlimages/curl, not busybox: busybox:1.28 (already used by init-config above)
+        # ships a wget too old to complete a TLS handshake with github.com. Pinned to an
+        # exact tag for reproducibility.
+        - name: init-model
+          image: curlimages/curl:8.11.0
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              MODEL=/config/model_cache/yolov9t-320.onnx
+              SHA256=e415adf344d6dc409b5cf9829eb55d0fd26816d90452dc18e59f2a5f4214c51e
+              URL=https://github.com/cjchand/flux-home-lab/releases/download/frigate-model-yolov9t-320-v1/yolov9t-320.onnx
+
+              mkdir -p /config/model_cache
+
+              if [ -f "$MODEL" ] && echo "$SHA256  $MODEL" | sha256sum -c - >/dev/null 2>&1; then
+                echo "Model already present and checksum verified, skipping download"
+                exit 0
+              fi
+
+              echo "Fetching detection model..."
+              curl -fsSL -o "$MODEL.tmp" "$URL"
+              echo "$SHA256  $MODEL.tmp" | sha256sum -c -
+              mv "$MODEL.tmp" "$MODEL"
+              echo "Model fetched and verified"
+          volumeMounts:
+            - name: config-storage
+              mountPath: /config
       containers:
         - name: frigate
           image: ghcr.io/blakeblackshear/frigate:stable
