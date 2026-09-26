@@ -4,14 +4,15 @@ mqtt:
   port: 1883
 
 detectors:
-  # OpenVINO on the Intel HD 630 iGPU. The device is granted by the
-  # gpu.intel.com/i915 resource request in deployment-frigate.yaml, not by a
-  # hostPath mount — see docs/Applications/intel-gpu-plugin.md.
+  # OpenVINO on CPU. This is a stepping stone, not the destination: it proves the
+  # OpenVINO runtime loads and detects correctly on this hardware before the iGPU
+  # is brought into the picture, so a later failure can be attributed cleanly.
   #
-  # No model: block — Frigate's bundled default OpenVINO model.
+  # No model: block — Frigate's bundled default OpenVINO model is used deliberately,
+  # so this commit changes exactly one variable versus the previous CPU detector.
   ov:
     type: openvino
-    device: GPU
+    device: CPU
 
 # HTTP-FLV is used instead of raw RTSP — Reolink's RTSP implementation has known
 # instability in Frigate. See: https://docs.frigate.video/configuration/camera_specific/

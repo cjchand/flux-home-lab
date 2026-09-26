@@ -83,17 +83,6 @@ spec:
             limits:
               cpu: "4"
               memory: 4Gi
-              # Intel HD 630 iGPU, advertised by the intel-gpu-plugin DaemonSet in
-              # cluster-services. Requesting it both grants /dev/dri access and
-              # constrains Frigate to a node with a free GPU slot.
-              #
-              # shared-dev-num is 1 cluster-wide, so this claims the whole iGPU on
-              # whichever node Frigate lands on. That is intentional: the HD 630 has
-              # a single render engine and detection needs it continuously.
-              #
-              # Not specified under requests: Kubernetes mirrors extended resources
-              # from limits automatically.
-              gpu.intel.com/i915: 1
       volumes:
         - name: config-storage
           persistentVolumeClaim:
