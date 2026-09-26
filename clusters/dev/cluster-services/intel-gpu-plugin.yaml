@@ -50,7 +50,7 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: status.hostIP
-        image: intel/intel-gpu-plugin:0.36.0
+        image: intel/intel-gpu-plugin:0.37.0
         imagePullPolicy: IfNotPresent
         # LOCAL CHANGE: upstream passes no args, which means shared-dev-num
         # defaults to 1. Set explicitly because the value is a real decision:
