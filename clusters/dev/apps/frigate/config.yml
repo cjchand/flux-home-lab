@@ -13,16 +13,6 @@ detectors:
     type: openvino
     device: GPU
 
-ffmpeg:
-  # VAAPI, not QSV: VAAPI is the correct path for Gen9.5 integrated graphics.
-  #
-  # Every detect stream on this cluster is a 640x480 H.264 substream, which is
-  # cheap to decode in software. VAAPI carries per-stream setup and frame-copy
-  # overhead that can consume the saving at that resolution, so this is expected
-  # to be roughly break-even. It is a separate commit so the measurement can say
-  # so plainly, and revert cleanly if it does.
-  hwaccel_args: preset-vaapi
-
 # HTTP-FLV is used instead of raw RTSP — Reolink's RTSP implementation has known
 # instability in Frigate. See: https://docs.frigate.video/configuration/camera_specific/
 # Enable HTTP on each camera: Reolink app → Camera Settings → Network → Advanced → HTTP
