@@ -1,0 +1,111 @@
+# Intel GPU device plugin — advertises the HD 630 iGPU as gpu.intel.com/i915.
+#
+# Vendored from:
+#   https://github.com/intel/intel-device-plugins-for-kubernetes
+#   deployments/gpu_plugin/base/intel-gpu-plugin.yaml at tag v0.36.0
+#
+# Vendored rather than referenced as a remote Kustomize base so that Flux
+# reconciliation does not depend on GitHub being reachable from kustomize-controller.
+#
+# Upstream also ships a `nfd_labeled_nodes` overlay. It is deliberately NOT used:
+# it carries a nodeSelector on a Node Feature Discovery label this cluster does not
+# produce, so the DaemonSet would schedule nowhere.
+#
+# All three nodes have an identical Intel HD 630 (Kaby Lake, Gen9.5), so no node
+# targeting beyond the upstream arch selector is required.
+#
+# renovate: datasource=docker depName=intel/intel-gpu-plugin
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-gpu-plugin
+  # LOCAL CHANGE: upstream sets no namespace. This repo has a single Flux
+  # Kustomization with no targetNamespace, so an unqualified resource would land
+  # in `default`.
+  namespace: cluster-services
+  labels:
+    app: intel-gpu-plugin
+spec:
+  selector:
+    matchLabels:
+      app: intel-gpu-plugin
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: intel-gpu-plugin
+    spec:
+      containers:
+      - name: intel-gpu-plugin
+        env:
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          - name: HOST_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.hostIP
+        image: intel/intel-gpu-plugin:0.36.0
+        imagePullPolicy: IfNotPresent
+        # LOCAL CHANGE: upstream passes no args, which means shared-dev-num
+        # defaults to 1. Set explicitly because the value is a real decision:
+        # HD 630 has a single render engine, so advertising more than one slot
+        # would advertise capacity the hardware does not have. Timeslicing that
+        # one engine between Frigate and, say, a transcoder is worse than having
+        # the scheduler place them on different nodes — which is exactly what a
+        # value of 1 produces.
+        args:
+          - -shared-dev-num
+          - "1"
+        securityContext:
+          seLinuxOptions:
+            type: "container_device_plugin_t"
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+        resources:
+          requests:
+            memory: "45Mi"
+            cpu: 40m
+          limits:
+            memory: "90Mi"
+            cpu: 100m
+        volumeMounts:
+        - name: devfs
+          mountPath: /dev/dri
+          readOnly: true
+        - name: sysfsdrm
+          mountPath: /sys/class/drm
+          readOnly: true
+        - name: kubeletsockets
+          # NOTE: /var/lib/kubelet is a symlink to
+          # /var/snap/microk8s/common/var/lib/kubelet on these nodes, so the
+          # upstream default path resolves correctly with no MicroK8s patch.
+          mountPath: /var/lib/kubelet/device-plugins
+        - name: cdipath
+          mountPath: /var/run/cdi
+      volumes:
+      - name: devfs
+        hostPath:
+          path: /dev/dri
+      - name: sysfsdrm
+        hostPath:
+          path: /sys/class/drm
+      - name: kubeletsockets
+        hostPath:
+          path: /var/lib/kubelet/device-plugins
+      - name: cdipath
+        hostPath:
+          path: /var/run/cdi
+          type: DirectoryOrCreate
+      nodeSelector:
+        kubernetes.io/arch: amd64

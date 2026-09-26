@@ -12,6 +12,7 @@ resources:
   - namespace.yaml
   - helm-repository-cloudnative-pg.yaml
   - cloudnative-pg-operator-helmrelease.yaml
+  - intel-gpu-plugin.yaml
   # NOTE: internal-ca-issuer.yaml is excluded here because it requires
   # cert-manager CRDs to be installed first. Apply it manually after
   # cert-manager is ready, or add it back to this kustomization once
