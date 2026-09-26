@@ -82,6 +82,15 @@ Set up a fresh node (does not join to cluster):
 ansible-playbook playbooks/bootstrap-node.yml --limit microk8s-node-04
 ```
 
+### Intel GPU Diagnostics
+
+Install host-side GPU diagnostics without triggering an OS upgrade. This avoids
+the dist-upgrade and reboot that site.yml performs through the common role:
+
+```bash
+ansible-playbook playbooks/intel-gpu.yml
+```
+
 ### Join Node to Cluster
 
 After bootstrap, join the node:
