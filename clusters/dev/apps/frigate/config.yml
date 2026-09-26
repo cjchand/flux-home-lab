@@ -4,17 +4,24 @@ mqtt:
   port: 1883
 
 detectors:
-  # OpenVINO on CPU — stepping stone before GPU. Verified against the actual
-  # Frigate 0.17.2 source (frigate/detectors/plugins/openvino.py and
-  # detection_runners.py) after the first attempt crashed the whole container:
-  # the openvino detector has NO bundled-default code path. model.path is
-  # required unconditionally; without it, OpenVINOModelRunner.__init__ calls
-  # os.path.isfile(None) and raises before the detector process can start —
-  # and Frigate does not isolate that failure to the subprocess, the whole
-  # container restarts.
+  # OpenVINO on the Intel HD 630 iGPU. Proven on CPU first (real inference,
+  # zero errors, stable) before flipping to GPU, since the model-path bug
+  # below is in code shared by both device paths.
+  #
+  # Verified against the actual Frigate 0.17.2 source
+  # (frigate/detectors/plugins/openvino.py and detection_runners.py) after the
+  # first attempt crashed the whole container: the openvino detector has NO
+  # bundled-default code path. model.path is required unconditionally; without
+  # it, OpenVINOModelRunner.__init__ calls os.path.isfile(None) and raises
+  # before the detector process can start — and Frigate does not isolate that
+  # failure to the subprocess, the whole container restarts.
+  #
+  # The device is granted by the gpu.intel.com/i915 resource request in
+  # deployment-frigate.yaml, not by a hostPath mount — see
+  # docs/Applications/intel-gpu-plugin.md.
   ov:
     type: openvino
-    device: CPU
+    device: GPU
 
 # The bundled ssdlite_mobilenet_v2 model IS still physically present in the
 # Frigate 0.17.2 image at /openvino-model/ (confirmed: the .xml/.bin files are
