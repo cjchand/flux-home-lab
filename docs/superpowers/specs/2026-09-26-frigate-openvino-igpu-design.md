@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-26
 **Status:** Approved, not yet implemented
-**Scope:** `clusters/dev/apps/frigate/`, `clusters/dev/cluster-services/`
+**Scope:** `clusters/dev/apps/frigate/`, `clusters/dev/cluster-services/`, `ansible/`
 
 ## Goal
 
@@ -55,6 +55,20 @@ which this work revisits.
 No GPU device plugin and no Node Feature Discovery are installed; no node advertises any
 `gpu.intel.com/*` resource. cert-manager is present, so the Intel operator route would
 be viable, but is not used (see Decisions).
+
+### Host userspace — absent, and it matters for verification
+
+The nodes provide only the kernel side of the GPU stack, which is all Frigate needs: the
+container image ships libva, the iHD media driver, the OpenVINO runtime, and
+`intel_gpu_top`. `i915` is loaded on all three nodes and `/lib/firmware/i915/` carries the
+full Kaby Lake set (`kbl_guc_*`, `kbl_huc_4.0.0`, `kbl_dmc_*`) from stock `linux-firmware`.
+**No host package is required for the feature to work.**
+
+However, the hosts have no VA-API userspace at all — `dpkg -l` matches no `libva`,
+`vainfo`, `intel-media-*`, or `intel-gpu-tools` — and `cjchand` is not a member of the
+`render` group, while `/dev/dri/renderD128` is `root:render 0660`. There is consequently
+no way to observe GPU activity from outside the container. That is a verification gap
+rather than a functional one, and it is addressed in Decisions.
 
 ### Cameras
 
@@ -143,6 +157,30 @@ no Kyverno or Gatekeeper. The choice is not forced by policy.
   plugin injects the device nodes but does not change their `root:render 0660` mode.
   Frigate's image runs as root, so this does not affect the work here.
 
+### Host packages go through Ansible, and exist for verification
+
+The repository already manages the nodes with Ansible (`roles/common`, `microk8s`,
+`tailscale`), so any OS-level change belongs there rather than in a manual step or a
+privileged pod.
+
+No host package is needed for Frigate to use the iGPU. A role is added anyway, because the
+original verification plan checked Frigate's `/api/stats` for `gpu_usages` — which is
+Frigate reporting on itself. If OpenVINO silently falls back to CPU, or VAAPI fails and
+ffmpeg quietly soft-decodes, that check cannot detect it. For a change whose entire
+justification is that the GPU is doing the work, self-reporting is insufficient evidence.
+Host-side `intel_gpu_top` answers it independently: whether the render engine is busy and
+whether the video-decode engines are active.
+
+A new `ansible/roles/intel-gpu/` therefore installs `intel-gpu-tools`, `vainfo`, and
+`intel-media-va-driver` (iHD supports Gen9.5), adds `cjchand` to `render` and `video` so
+those tools run without sudo, and asserts `i915` is loaded so the role doubles as a
+precondition check. It is wired into `playbooks/site.yml` after `common`.
+
+The packages could have gone directly into `base_packages` in
+`inventory/group_vars/all.yml`. A role is preferred so the group membership and the i915
+assertion stay with the packages instead of being scattered, and so the reason those
+packages exist is self-documenting.
+
 ### Split Phase 3 into two commits
 
 The original plan bundled the detector switch to `device: GPU` with enabling VAAPI
@@ -151,17 +189,22 @@ together, a null result is uninterpretable. They are separate commits.
 
 ## Implementation
 
-Five commits. Commits 2 and 3 land as separate PRs with verification between them: if
+Six commits. Commits 2 and 3 land as separate PRs with verification between them: if
 `gpu.intel.com/i915` is not in node allocatable when the Deployment change reconciles,
 Frigate goes `Pending` and cameras are lost until it is fixed.
 
 | # | Change | Files | Reverts independently |
 |---|---|---|---|
+| 0 | `intel-gpu` Ansible role: host GPU observability tooling | `ansible/` | yes |
 | 1 | `detectors.ov: {type: openvino, device: CPU}`, bundled default model | `config.yml` | yes |
 | 2 | Intel GPU device plugin, vendored, pinned v0.36.0 | `cluster-services/` | yes |
 | 3 | `gpu.intel.com/i915: 1` limit on the container + `device: GPU` | `deployment-frigate.yaml`, `config.yml` | yes |
 | 4 | `ffmpeg.hwaccel_args: preset-vaapi` globally | `config.yml` | yes |
 | 5 | YOLOv9-t at 320x320 — **gated on measurement, may not land** | `config.yml` | yes |
+
+Commit 0 touches no cluster resource and must land first, since every later commit's
+verification depends on the tooling it installs. It is applied with
+`ansible-playbook playbooks/site.yml`, not by Flux.
 
 Commit 1 deliberately remains its own step despite looking like a formality: it is the
 cheapest possible place to discover that OpenVINO will not load on this hardware at all.
@@ -193,17 +236,29 @@ Per commit, beyond the metrics above:
 
 - `detection_fps` non-zero on all five cameras and `skipped_fps` still 0
 - A person event reaching Home Assistant over MQTT with unchanged topics and camera names
+- Commit 0 only: `vainfo` on each node reports the iHD driver and lists H.264 decode
+  profiles, and `intel_gpu_top` runs as `cjchand` without sudo
 - Commit 2 only: `gpu.intel.com/i915` present in `kubectl describe node` allocatable on
   all three nodes
-- Commit 3 only: Frigate's startup log reports OpenVINO on GPU, and `/api/stats`
-  populates `gpu_usages` (currently `None`)
+- Commit 3 only: Frigate's startup log reports OpenVINO on GPU, `/api/stats` populates
+  `gpu_usages` (currently `None`), **and** `intel_gpu_top` on the node running Frigate
+  shows sustained Render/3D engine activity. The host-side check is authoritative; the
+  `/api/stats` value alone cannot distinguish real GPU inference from a silent CPU
+  fallback.
+- Commit 4 only: `intel_gpu_top` shows the Video engine active on the node running
+  Frigate. If it stays idle, VAAPI is not engaged regardless of what the config says, and
+  the commit is reverted.
 
 ## Rollback
 
-Each commit is independently revertible via `git revert` plus
-`flux reconcile kustomization flux-system`. Reverting commits 3 and 2 together leaves no
-residue. No persistent state is migrated at any step; the only artifact outside Git is the
-optional ONNX file on the config PVC, which is inert unless `config.yml` references it.
+Commits 1-5 are independently revertible via `git revert` plus
+`flux reconcile kustomization flux-system`. Commit 0 is reverted by removing the role from
+`site.yml` and re-running the playbook; the installed packages are inert diagnostics and
+can simply be left in place.
+
+Reverting commits 3 and 2 together leaves no residue. No persistent state is migrated at
+any step; the only artifact outside Git is the optional ONNX file on the config PVC, which
+is inert unless `config.yml` references it.
 
 ## Expected outcome
 
