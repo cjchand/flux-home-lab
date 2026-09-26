@@ -4,12 +4,37 @@ mqtt:
   port: 1883
 
 detectors:
-  # CPU-only inference — Intel GPUs on these nodes are too underpowered for Frigate.
-  # Tune num_threads based on observed CPU usage; 3 is a reasonable starting point
-  # for 3–5 cameras at 5 FPS each.
-  cpu1:
-    type: cpu
-    num_threads: 3
+  # OpenVINO on CPU — stepping stone before GPU. Verified against the actual
+  # Frigate 0.17.2 source (frigate/detectors/plugins/openvino.py and
+  # detection_runners.py) after the first attempt crashed the whole container:
+  # the openvino detector has NO bundled-default code path. model.path is
+  # required unconditionally; without it, OpenVINOModelRunner.__init__ calls
+  # os.path.isfile(None) and raises before the detector process can start —
+  # and Frigate does not isolate that failure to the subprocess, the whole
+  # container restarts.
+  ov:
+    type: openvino
+    device: CPU
+
+# The bundled ssdlite_mobilenet_v2 model IS still physically present in the
+# Frigate 0.17.2 image at /openvino-model/ (confirmed: the .xml/.bin files are
+# on disk) — but as of this version nothing in Frigate's own code references
+# that path automatically to populate model.path. It was auto-wired in older
+# Frigate releases; that wiring is gone here even though the file remains. So
+# it has to be pointed at explicitly, once, and then it just works.
+#
+# Only path/labelmap_path/width/height need to be set — the model's actual
+# input layer (read directly from the .xml: shape 1,300,300,3, dtype u8) is
+# already an exact match for Frigate's schema defaults: input_tensor: nhwc,
+# input_pixel_format: rgb, input_dtype: int, model_type: ssd. This is almost
+# certainly not a coincidence — those defaults look chosen to match this exact
+# model. Model swap (e.g. to YOLOv9 for better accuracy) is a later, separate
+# decision once this is proven working end-to-end.
+model:
+  path: /openvino-model/ssdlite_mobilenet_v2.xml
+  labelmap_path: /openvino-model/coco_91cl_bkgr.txt
+  width: 300
+  height: 300
 
 # HTTP-FLV is used instead of raw RTSP — Reolink's RTSP implementation has known
 # instability in Frigate. See: https://docs.frigate.video/configuration/camera_specific/
