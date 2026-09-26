@@ -11,6 +11,11 @@
   "helm-values": {
     "enabled": true
   },
+  "kubernetes": {
+    "managerFilePatterns": [
+      "/clusters/dev/cluster-services/intel-gpu-plugin\\.yaml$/"
+    ]
+  },
   "packageRules": [
     {
       "matchManagers": [

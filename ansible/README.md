@@ -82,6 +82,15 @@ Set up a fresh node (does not join to cluster):
 ansible-playbook playbooks/bootstrap-node.yml --limit microk8s-node-04
 ```
 
+### Intel GPU Diagnostics
+
+Install host-side GPU diagnostics without triggering an OS upgrade. This avoids
+the dist-upgrade and reboot that site.yml performs through the common role:
+
+```bash
+ansible-playbook playbooks/intel-gpu.yml
+```
+
 ### Join Node to Cluster
 
 After bootstrap, join the node:
@@ -98,6 +107,20 @@ ansible-playbook playbooks/join-cluster.yml -e 'new_node=microk8s-node-04'
 - Installs base packages (curl, htop, vim, etc.)
 - Sets timezone
 - Reboots if required
+
+### `intel-gpu`
+
+Installs host-side diagnostics for the Intel HD 630 iGPU (`intel-gpu-tools`,
+`vainfo`, `intel-media-va-driver`) and grants `cjchand` access to the render
+and video device nodes.
+
+These packages are **not** required for workloads to use the GPU — containers
+ship their own VA-API and OpenVINO userspace. They exist so GPU activity can be
+verified from outside a container, which is the only way to distinguish real
+hardware acceleration from a silent software fallback.
+
+The role also asserts that `i915` is loaded and `/dev/dri/renderD128` exists,
+so it doubles as a precondition check for any GPU workload.
 
 ### microk8s
 

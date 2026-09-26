@@ -1,0 +1,27 @@
+---
+# Install host-side GPU diagnostics for the Intel HD 630 iGPU
+#
+# This installs intel-gpu-tools, vainfo, and intel-media-va-driver, plus
+# grants the cjchand user access to the render and video device nodes.
+#
+# These packages are NOT required for containers to use the iGPU -- containers
+# ship their own VA-API and OpenVINO userspace. They exist so GPU activity can
+# be verified from outside a container, which is the only way to distinguish real
+# hardware acceleration from a silent software fallback.
+#
+# This playbook exists so the role can be applied WITHOUT triggering the common
+# role's dist-upgrade and reboot. When run through site.yml, the common role
+# runs first, performs a full apt upgrade, and reboots if needed -- this took
+# all three cluster nodes down at once and ended the play before intel-gpu ever
+# ran. site.yml remains the full-site path; this playbook is an additional
+# narrower entry point.
+#
+# Note: group membership (render, video) does not apply to existing SSH sessions.
+# The operator must reconnect after this playbook runs before vainfo and
+# intel_gpu_top will work unprivileged.
+
+- name: Install Intel GPU host diagnostics
+  hosts: microk8s
+  become: yes
+  roles:
+    - intel-gpu

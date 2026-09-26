@@ -4,12 +4,24 @@ mqtt:
   port: 1883
 
 detectors:
-  # CPU-only inference — Intel GPUs on these nodes are too underpowered for Frigate.
-  # Tune num_threads based on observed CPU usage; 3 is a reasonable starting point
-  # for 3–5 cameras at 5 FPS each.
-  cpu1:
-    type: cpu
-    num_threads: 3
+  # OpenVINO on the Intel HD 630 iGPU. The device is granted by the
+  # gpu.intel.com/i915 resource request in deployment-frigate.yaml, not by a
+  # hostPath mount — see docs/Applications/intel-gpu-plugin.md.
+  #
+  # No model: block — Frigate's bundled default OpenVINO model.
+  ov:
+    type: openvino
+    device: GPU
+
+ffmpeg:
+  # VAAPI, not QSV: VAAPI is the correct path for Gen9.5 integrated graphics.
+  #
+  # Every detect stream on this cluster is a 640x480 H.264 substream, which is
+  # cheap to decode in software. VAAPI carries per-stream setup and frame-copy
+  # overhead that can consume the saving at that resolution, so this is expected
+  # to be roughly break-even. It is a separate commit so the measurement can say
+  # so plainly, and revert cleanly if it does.
+  hwaccel_args: preset-vaapi
 
 # HTTP-FLV is used instead of raw RTSP — Reolink's RTSP implementation has known
 # instability in Frigate. See: https://docs.frigate.video/configuration/camera_specific/

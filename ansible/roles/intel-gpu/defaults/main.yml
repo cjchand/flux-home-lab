@@ -1,0 +1,20 @@
+---
+# Host-side diagnostics for the Intel HD 630 iGPU.
+#
+# NONE of these packages are required for workloads to USE the GPU. Frigate's
+# container image ships its own libva, iHD media driver and OpenVINO runtime;
+# the host supplies only the i915 kernel driver and firmware, both of which are
+# already present on Ubuntu 24.04 via linux-firmware.
+#
+# They are installed so GPU activity can be observed from OUTSIDE the container.
+# Without them, "is the GPU actually busy?" can only be answered by asking the
+# workload about itself, which cannot detect a silent fallback to CPU.
+intel_gpu_packages:
+  - intel-gpu-tools          # provides intel_gpu_top
+  - vainfo                   # VA-API capability probe
+  - intel-media-va-driver    # iHD driver; supports Gen9.5 (Kaby Lake)
+
+# Users granted unprivileged access to the render/video device nodes.
+# /dev/dri/renderD128 is root:render 0660, /dev/dri/card0 is root:video 0660.
+intel_gpu_users:
+  - cjchand
