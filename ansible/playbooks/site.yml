@@ -7,5 +7,6 @@
   become: yes
   roles:
     - common
+    - intel-gpu
     - microk8s
     - tailscale

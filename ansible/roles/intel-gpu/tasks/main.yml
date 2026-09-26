@@ -1,0 +1,41 @@
+---
+- name: Assert the i915 kernel driver is loaded
+  ansible.builtin.command: lsmod
+  register: intel_gpu_lsmod
+  changed_when: false
+
+- name: Fail if i915 is missing
+  ansible.builtin.fail:
+    msg: >-
+      i915 is not loaded on {{ inventory_hostname }}. The iGPU is unusable by
+      any workload until this is resolved; check that the BIOS has not disabled
+      integrated graphics.
+  when: "'i915' not in intel_gpu_lsmod.stdout"
+
+- name: Assert the render device node exists
+  ansible.builtin.stat:
+    path: /dev/dri/renderD128
+  register: intel_gpu_render_node
+
+- name: Fail if the render node is missing
+  ansible.builtin.fail:
+    msg: >-
+      /dev/dri/renderD128 does not exist on {{ inventory_hostname }} even though
+      i915 is loaded.
+  when: not intel_gpu_render_node.stat.exists
+
+- name: Install Intel GPU diagnostic packages
+  ansible.builtin.apt:
+    name: "{{ intel_gpu_packages }}"
+    state: present
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Grant users access to the render and video device nodes
+  ansible.builtin.user:
+    name: "{{ item }}"
+    groups:
+      - render
+      - video
+    append: yes
+  loop: "{{ intel_gpu_users }}"
