@@ -60,6 +60,14 @@ spec:
         # exact tag for reproducibility.
         - name: init-model
           image: curlimages/curl:8.11.0
+          # curlimages/curl defaults to a non-root user (uid 100), unlike busybox
+          # (init-config, above) and Frigate's own image, both of which run as root.
+          # The config PVC's content ends up root-owned as a result, so without this
+          # the container can't write into it: curl fails with "client returned ERROR
+          # on write" (EACCES surfacing through curl's write callback, not a clear
+          # permission-denied message) rather than anything that names the real cause.
+          securityContext:
+            runAsUser: 0
           command:
             - sh
             - -c
