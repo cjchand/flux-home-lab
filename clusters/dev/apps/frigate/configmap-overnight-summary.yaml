@@ -28,6 +28,11 @@ data:
         period = "AM" if dt.hour < 12 else "PM"
         return f"{hour}:{dt.minute:02d} {period}"
 
+    # camera_doorbell runs detection 24/7 and is intentionally left out of
+    # this report — it's not part of the overnight-only schedule this
+    # summary is built around, and would otherwise dominate the count.
+    EXCLUDED_CAMERAS = {"camera_doorbell"}
+
     def get_events():
         # Script runs at 7am Chicago time; look back 9 hours to cover 10pm–7am
         now_utc = datetime.now(timezone.utc)
@@ -35,7 +40,9 @@ data:
         after = int((now_utc - timedelta(hours=9)).timestamp())
         url = f"{FRIGATE_URL}/api/events?label=person&after={after}&before={before}&limit=100"
         with urllib.request.urlopen(url, timeout=10) as r:
-            return json.loads(r.read()), after, before
+            events = json.loads(r.read())
+        events = [e for e in events if e["camera"] not in EXCLUDED_CAMERAS]
+        return events, after, before
 
     def post_slack(payload):
         payload["channel"] = SLACK_CHANNEL
@@ -78,7 +85,6 @@ data:
                 "camera_living_room": "Living Room",
                 "camera_workout_room": "Workout Room",
                 "camera_garage": "Garage",
-                "camera_doorbell": "Doorbell",
             }
             times_str = "\n".join(
                 f"  • {fmt_time(e['start_time'], utc_offset)} — {camera_labels.get(e['camera'], e['camera'])}"

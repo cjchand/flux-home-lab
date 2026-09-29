@@ -32,6 +32,8 @@ data:
               # Entity IDs come from the Frigate HACS integration: it creates a
               # `recordings` (plural) and `detect` switch per camera in Frigate's config.
               # Add a pair here for each camera you add to configmap-frigate.yaml.
+              # camera_doorbell is intentionally excluded: it runs recording/
+              # detection 24/7 and is not subject to this presence/time schedule.
               entity_id: &camera_switches
                 - switch.camera_kitchen_recordings
                 - switch.camera_kitchen_detect
@@ -41,8 +43,6 @@ data:
                 - switch.camera_workout_room_detect
                 - switch.camera_garage_recordings
                 - switch.camera_garage_detect
-                - switch.camera_doorbell_recordings
-                - switch.camera_doorbell_detect
 
       # --- Morning: disable cameras at 07:00 if someone is home ---
       - alias: "Frigate - Disable cameras morning"

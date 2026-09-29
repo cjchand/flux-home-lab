@@ -220,6 +220,11 @@ cameras:
     objects:
       track:
         - person
+        - dog
+        - cat
+        # coco-80 has no separate truck/bus class -- car, truck, and bus all
+        # map to this same "car" label, so this also catches larger vehicles.
+        - car
     record:
       enabled: true
     snapshots:
