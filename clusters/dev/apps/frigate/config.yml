@@ -213,6 +213,11 @@ cameras:
           roles:
             - detect
     detect:
+      # Always on. Frigate defaults detect.enabled to False, and the Home
+      # Assistant day/night automations only toggle the four indoor cameras, so
+      # without this the doorbell never detected (and any manual UI toggle was
+      # lost on every pod restart).
+      enabled: true
       width: 640
       height: 480
       # 5 FPS is sufficient for person detection and saves significant CPU.
