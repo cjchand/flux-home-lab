@@ -94,6 +94,15 @@ spec:
     grafana:
       enabled: true
       adminPassword: "admin"  # You should change this or use a secret
+      datasources:
+        datasources.yaml:
+          apiVersion: 1
+          datasources:
+            - name: Prometheus
+              type: prometheus
+              url: http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+              access: proxy
+              isDefault: false
       persistence:
         enabled: true
         storageClass: "nfs-client"
