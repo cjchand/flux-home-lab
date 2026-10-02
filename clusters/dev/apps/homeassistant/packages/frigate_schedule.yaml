@@ -1,0 +1,56 @@
+# Indoor camera schedule: Frigate detection and recording ON overnight
+# (23:00–07:00), OFF during the day. The doorbell is not part of this; it runs
+# 24/7 (detect.enabled: true in the Frigate config).
+#
+# One automation enforces the state rather than separate on/off automations,
+# because the schedule has to be re-applied whenever Frigate restarts, not just
+# at the two boundaries. Frigate resets each camera to its config defaults on
+# every start (detect off, recording on), and every config.yml commit restarts
+# it, so without the restart trigger the indoor cameras record all day and
+# don't detect overnight until the next boundary.
+#
+# Entity IDs are `_recordings` (plural), as registered by the Frigate
+# integration. The automations this replaces used `_recording`, which does not
+# exist: HA logged "Referenced entities ... are missing" at every boundary and
+# only ever toggled detection, so the indoor cameras recorded 24/7.
+automation:
+  - id: frigate_indoor_schedule
+    alias: Frigate - Enforce indoor camera schedule
+    triggers:
+      - trigger: time
+        at: "07:00:00"
+      - trigger: time
+        at: "23:00:00"
+      # Frigate publishes this (retained) on every start.
+      - trigger: mqtt
+        topic: frigate/available
+        payload: online
+      - trigger: homeassistant
+        event: start
+    actions:
+      # Give the Frigate integration time to re-register its switch entities
+      # after either side restarts.
+      - delay: "00:00:30"
+      - if:
+          - condition: time
+            after: "23:00:00"
+            before: "07:00:00"
+        then:
+          - action: switch.turn_on
+            target:
+              entity_id: &indoor_camera_switches
+                - switch.camera_kitchen_detect
+                - switch.camera_kitchen_recordings
+                - switch.camera_living_room_detect
+                - switch.camera_living_room_recordings
+                - switch.camera_workout_room_detect
+                - switch.camera_workout_room_recordings
+                - switch.camera_garage_detect
+                - switch.camera_garage_recordings
+        else:
+          - action: switch.turn_off
+            target:
+              entity_id: *indoor_camera_switches
+    # A burst of triggers (HA start + the retained MQTT message) collapses into
+    # a single run.
+    mode: restart

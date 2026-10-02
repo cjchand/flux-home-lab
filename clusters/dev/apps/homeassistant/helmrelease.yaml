@@ -236,9 +236,27 @@ spec:
               exclude_entities:
                 - switch.kitchen_refrigerator_express_mode
 
+        # Packages are this repo's automations-as-code (see packages/ and the
+        # configMapGenerator in kustomization.yaml). automations.yaml above stays
+        # for anything created in the UI; package automations show in the UI
+        # but are read-only there.
+        homeassistant:
+          packages: !include_dir_named packages
+
         automation: !include automations.yaml
         script: !include scripts.yaml
         scene: !include scenes.yaml
+
+    # Read-only: packages are owned by Git. The name is rewritten to the
+    # generator's hashed name by kustomizeconfig.yaml.
+    additionalVolumes:
+      - name: packages
+        configMap:
+          name: homeassistant-packages
+    additionalMounts:
+      - name: packages
+        mountPath: /config/packages
+        readOnly: true
 
 
     # Resource limits

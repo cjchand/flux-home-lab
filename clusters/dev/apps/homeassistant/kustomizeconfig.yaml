@@ -1,0 +1,8 @@
+# Lets the configMapGenerator below rewrite the hashed ConfigMap name inside
+# the HelmRelease's values, which kustomize does not know to look in by default.
+nameReference:
+  - kind: ConfigMap
+    version: v1
+    fieldSpecs:
+      - kind: HelmRelease
+        path: spec/values/additionalVolumes/configMap/name

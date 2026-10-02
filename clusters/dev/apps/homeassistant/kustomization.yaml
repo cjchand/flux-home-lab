@@ -4,5 +4,20 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - source-helmrepo-k8s-at-home.yaml
-  - configmap-packages.yaml
-  - helmrelease.yaml 
+  - helmrelease.yaml
+
+# HA packages (automations etc. as code), mounted at /config/packages and loaded
+# by `homeassistant: packages:` in helmrelease.yaml's templateConfig.
+#
+# Generated so Kustomize appends a content hash to the name. kustomizeconfig.yaml
+# carries that hashed name into the HelmRelease values, so editing a package
+# changes the StatefulSet's pod spec and HA restarts onto it automatically —
+# HA only reads YAML packages at startup (or on a manual reload).
+configMapGenerator:
+  - name: homeassistant-packages
+    namespace: homeassistant
+    files:
+      - packages/frigate_schedule.yaml
+
+configurations:
+  - kustomizeconfig.yaml
