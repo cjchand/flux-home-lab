@@ -23,12 +23,12 @@ detectors:
     type: openvino
     device: GPU
 
-# YOLOv9-t at 320x320, replacing the bundled ssdlite_mobilenet_v2 (proven working
-# first — see git history — before this upgrade) for better detection accuracy.
-# yolov9t chosen over the docs' general starting recommendation of yolov9s: this
-# is a genuinely weak, low-power Gen9.5 iGPU (24 EUs), and yolov9t is what the
-# Frigate community actually runs on comparably weak Intel iGPUs (verified
-# against a real working example, not just picked as a guess).
+# YOLOv9-s at 320x320. Started on yolov9t (what the community runs on comparably
+# weak Gen9.5 iGPUs) out of caution; it ran at 16 ms inference on this HD 630,
+# leaving enough headroom to try the docs' recommended yolov9s for better
+# accuracy. If inference_speed climbs too high or skipped_fps appears, revert
+# to yolov9t (release frigate-model-yolov9t-320-v1, see git history).
+# Same 320 input as before so model size is the only variable.
 #
 # model_type: yolo-generic — NOT "yolov9". That looks like the obviously-correct
 # value and is invalid in Frigate 0.17: it silently drops the detector into a
@@ -49,7 +49,7 @@ detectors:
 # a checksummed GitHub Release asset on this same repo, onto the config PVC, on
 # first pod start only (see that file's comment for the full mechanism).
 model:
-  path: /config/model_cache/yolov9t-320.onnx
+  path: /config/model_cache/yolov9s-320.onnx
   model_type: yolo-generic
   width: 320
   height: 320
