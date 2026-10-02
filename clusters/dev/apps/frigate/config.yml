@@ -225,6 +225,10 @@ cameras:
         # coco-80 has no separate truck/bus class -- car, truck, and bus all
         # map to this same "car" label, so this also catches larger vehicles.
         - car
+    # Drawn in the Frigate UI; masks static scenery in the doorbell view that
+    # generated constant motion. Coordinates are normalized (0–1).
+    motion:
+      mask: 0.282,0.07,0.179,0.206,0.151,0.322,0.144,0.45,0.145,0.613,0.163,0.735,0.212,0.908,0.494,0.983,0.514,0.753,0.506,0.191,0.504,0.154,0.482,0.111,0.449,0.074,0.399,0.044,0.357,0.041
     record:
       enabled: true
     snapshots:
