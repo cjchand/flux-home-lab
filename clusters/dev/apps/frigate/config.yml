@@ -225,6 +225,26 @@ cameras:
         # coco-80 has no separate truck/bus class -- car, truck, and bus all
         # map to this same "car" label, so this also catches larger vehicles.
         - car
+    # The porch polygon was drawn in the Frigate UI around the area worth
+    # monitoring. Coordinates are normalized (0–1).
+    zones:
+      porch:
+        coordinates: 0.282,0.07,0.179,0.206,0.151,0.322,0.144,0.45,0.145,0.613,0.163,0.735,0.212,0.908,0.494,0.983,0.514,0.753,0.506,0.191,0.504,0.154,0.482,0.111,0.449,0.074,0.399,0.044,0.357,0.041
+    # Only objects in the porch zone become alerts; anything else seen on this
+    # camera is still recorded as a lower-priority detection.
+    review:
+      alerts:
+        required_zones:
+          - porch
+    # The exact inverse of the porch zone, split into left and right halves at
+    # the zone's top (0.357,0.041) and bottom (0.494,0.983) vertices, so motion
+    # outside the porch never triggers detection. Verified by sampling that every
+    # point in the frame lies in exactly one of: porch zone, left mask, right mask.
+    # If the porch polygon changes, regenerate both masks from it.
+    motion:
+      mask:
+        - 0,0,0.357,0,0.357,0.041,0.282,0.07,0.179,0.206,0.151,0.322,0.144,0.45,0.145,0.613,0.163,0.735,0.212,0.908,0.494,0.983,0.494,1,0,1
+        - 0.357,0,1,0,1,1,0.494,1,0.494,0.983,0.514,0.753,0.506,0.191,0.504,0.154,0.482,0.111,0.449,0.074,0.399,0.044,0.357,0.041
     record:
       enabled: true
     snapshots:
