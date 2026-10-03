@@ -5,7 +5,7 @@ Uptime Kuma monitor type **Keyword**, interval 1800s, 2 retries.
 **URL** (Loki instant query, URL-encoded):
 
 ```
-http://loki-stack.monitoring.svc.cluster.local:3100/loki/api/v1/query?query=sum%28count_over_time%28%7Bnamespace%3D%22teslamate%22%7D%20%7C%3D%20%22Scheduling%20token%20refresh%22%20%5B7h%5D%29%29%20%3E%200
+http://loki.monitoring.svc.cluster.local:3100/loki/api/v1/query?query=sum%28count_over_time%28%7Bnamespace%3D%22teslamate%22%7D%20%7C%3D%20%22Scheduling%20token%20refresh%22%20%5B7h%5D%29%29%20%3E%200
 ```
 
 Decoded LogQL:
@@ -21,8 +21,10 @@ sum(count_over_time({namespace="teslamate"} |= "Scheduling token refresh" [7h]))
 The `> 0` comparison is evaluated by Loki, so the result vector exists *only*
 when the condition holds. Loki returns `"result":[]` otherwise, which contains
 no `"value"` substring, so the keyword check fails and the monitor goes down.
-This avoids needing numeric comparison in Uptime Kuma, and works on Loki
-versions that reject `or vector(0)` (ours does).
+This avoids needing numeric comparison in Uptime Kuma. Don't "simplify" it
+to `... or vector(0)`: Loki 3 accepts that, but it always returns a series
+(with value `0` when nothing matched), so the keyword `"value"` would always
+be present and the monitor could never go down.
 
 `sum()` strips pod/filename labels so TeslaMate restarts don't churn the series.
 
