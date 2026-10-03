@@ -14,9 +14,63 @@ spec:
         name: prometheus-community
         namespace: monitoring
   values:
-    # Grafana is already provided by the loki-stack release (grafana.internal);
-    # Prometheus is wired into it as a datasource instead of running a second Grafana.
+    # The cluster's only general-purpose Grafana (TeslaMate runs its own).
+    # Datasources and dashboards are provisioned from git; the PVC only holds
+    # anything created in the UI.
     grafana:
+      enabled: true
+      admin:
+        existingSecret: grafana-admin
+        userKey: admin-user
+        passwordKey: admin-password
+      persistence:
+        enabled: true
+        storageClassName: nfs-client
+        accessModes: ["ReadWriteOnce"]
+        size: 1Gi
+      ingress:
+        enabled: true
+        ingressClassName: traefik
+        annotations:
+          traefik.ingress.kubernetes.io/router.entrypoints: websecure
+          traefik.ingress.kubernetes.io/router.tls: "true"
+          cert-manager.io/cluster-issuer: internal-ca
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/description: Dashboards
+          gethomepage.dev/group: Monitoring
+          gethomepage.dev/name: "Grafana"
+          gethomepage.dev/icon: "grafana.png"
+        hosts:
+          - grafana.internal
+        path: /
+        tls:
+          - hosts:
+              - grafana.internal
+            secretName: grafana-tls
+      additionalDataSources:
+        - name: Loki
+          type: loki
+          uid: loki
+          url: http://loki.monitoring.svc.cluster.local:3100
+          access: proxy
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+
+    # microk8s runs etcd, the scheduler, controller-manager and kube-proxy
+    # inside kubelite, so these ServiceMonitors never find a target. Disabling
+    # them drops their empty dashboards and their always-firing "down" alerts.
+    kubeEtcd:
+      enabled: false
+    kubeScheduler:
+      enabled: false
+    kubeControllerManager:
+      enabled: false
+    kubeProxy:
       enabled: false
 
     alertmanager:

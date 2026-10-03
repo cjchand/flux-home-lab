@@ -90,50 +90,9 @@ spec:
           cpu: 500m
           memory: 512Mi
 
-    # Grafana configuration
+    # Grafana moved to the kube-prometheus-stack release (apps/prometheus/).
     grafana:
-      enabled: true
-      adminPassword: "admin"  # You should change this or use a secret
-      datasources:
-        datasources.yaml:
-          apiVersion: 1
-          datasources:
-            - name: Prometheus
-              type: prometheus
-              url: http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
-              access: proxy
-              isDefault: false
-      persistence:
-        enabled: true
-        storageClass: "nfs-client"
-        accessModes:
-          - ReadWriteOnce
-        size: 5Gi
-      ingress:
-        enabled: true
-        ingressClassName: traefik
-        annotations:
-          traefik.ingress.kubernetes.io/router.entrypoints: websecure
-          traefik.ingress.kubernetes.io/router.tls: "true"
-          cert-manager.io/cluster-issuer: internal-ca
-          gethomepage.dev/enabled: "true"
-          gethomepage.dev/description: Grafana Dashboard
-          gethomepage.dev/group: Monitoring
-          gethomepage.dev/name: "Grafana"
-          gethomepage.dev/icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Grafana_logo.svg/1024px-Grafana_logo.svg.png"
-        hosts:
-          - grafana.internal
-        tls:
-          - hosts:
-              - grafana.internal
-            secretName: grafana-tls
-      resources:
-        requests:
-          cpu: 100m
-          memory: 128Mi
-        limits:
-          cpu: 500m
-          memory: 512Mi
+      enabled: false
 
     # Promtail configuration for log collection
     promtail:

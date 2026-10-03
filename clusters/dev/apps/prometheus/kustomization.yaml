@@ -4,4 +4,5 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - helm-repository.yaml
+  - grafana-admin-sealedsecret.yaml
   - helmrelease.yaml
