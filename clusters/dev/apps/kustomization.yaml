@@ -6,6 +6,7 @@ resources:
   - frigate/
   - homeassistant/
   - homepage/
+  - loki/
   - loki-stack/
   - metallb/
   - prometheus/
