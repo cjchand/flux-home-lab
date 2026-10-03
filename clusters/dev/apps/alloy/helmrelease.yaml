@@ -122,6 +122,15 @@ spec:
 
           loki.process "pod_logs" {
             stage.cri {}
+            // Loki rejects entries more than 1h behind a stream's newest entry,
+            // and inside a multi-stream batch that rejection comes back as a 500,
+            // which loki.write retries indefinitely -- stalling all collection.
+            // Drop such lines here instead. This mainly affects the first start
+            // (files are read from the beginning) and catch-up after >1h downtime.
+            stage.drop {
+              older_than          = "1h"
+              drop_counter_reason = "older_than_1h"
+            }
             forward_to = [loki.write.default.receiver]
           }
 
