@@ -93,6 +93,12 @@ spec:
     # Grafana moved to the kube-prometheus-stack release (apps/prometheus/).
     grafana:
       enabled: false
+      # Without this the chart still ships a "Loki" datasource ConfigMap marked
+      # isDefault, which the new Grafana's sidecar picks up and then refuses to
+      # start alongside its own default Prometheus datasource.
+      sidecar:
+        datasources:
+          enabled: false
 
     # Promtail configuration for log collection
     promtail:
