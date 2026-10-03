@@ -24,6 +24,11 @@ spec:
           traefik.ingress.kubernetes.io/router.entrypoints: websecure
           traefik.ingress.kubernetes.io/router.tls: "true"
           cert-manager.io/cluster-issuer: internal-ca
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: Coder
+          gethomepage.dev/group: Developer
+          gethomepage.dev/icon: coder.png
+          gethomepage.dev/description: Dev Environments
         host: coder.internal
         tls:
           enable: true

@@ -5,6 +5,7 @@ resources:
   - mosquitto/
   - frigate/
   - homeassistant/
+  - homepage/
   - loki-stack/
   - metallb/
   - prometheus/
