@@ -1,20 +1,47 @@
 # Monitoring & Observability
 
-## Loki Stack
-**Purpose**: Log aggregation and visualization (Grafana + Loki)
+## Logging
+**Purpose**: Collect every pod's logs and make them searchable in Grafana.
 
-The Loki Stack provides comprehensive logging and visualization capabilities for the cluster. It includes Grafana for dashboards and Loki for log aggregation, allowing you to monitor and troubleshoot applications effectively.
+Replaced the deprecated `loki-stack` chart (Loki 2.9, Promtail, Grafana
+10.3) on 2026-10-03; see
+[the design](../superpowers/specs/2026-10-03-loki-modernization-design.md).
 
-**Components**:
-- **Grafana**: Dashboard and visualization platform
-- **Loki**: Log aggregation system
-- **Promtail**: Log collection agent
+| Component | Where | Notes |
+|---|---|---|
+| **Loki** 3.6 | `apps/loki/`, chart `grafana/loki` | Single binary, tsdb/v13 on a 10Gi NFS PVC. Service `http://loki.monitoring.svc.cluster.local:3100`. |
+| **Alloy** | `apps/alloy/`, chart `grafana/alloy` | DaemonSet tailing `/var/log/pods` on each node. Same labels Promtail used: `namespace`, `app`, `instance`, `component`, `pod`, `container`, `node_name`, `job` (`<namespace>/<app>`). |
+| **Grafana** 13 | `apps/prometheus/`, kube-prometheus-stack | `https://grafana.internal`. Prometheus and Loki datasources plus the stock Kubernetes dashboards and the Loki Overview dashboard (`apps/loki/grafana-dashboard-configmap.yaml`), all provisioned from git. |
 
-**Features**:
-- Centralized log management
-- Powerful querying capabilities
-- Custom dashboards
-- Alerting and notifications
+**Retention**: 7 days by default; 14 days for `kube-system`, `monitoring` and
+`teslamate`. Enforced by Loki's compactor.
+
+**Grafana login**: user `admin`; the password is in SealedSecret
+`grafana-admin`:
+
+```bash
+kubectl -n monitoring get secret grafana-admin -o jsonpath='{.data.admin-password}' | base64 -d
+```
+
+### Things that bit during the migration
+
+- **Alloy drops lines older than 1h** (`stage.drop` in its config). Loki
+  rejects entries more than 1h behind a stream's newest entry, and inside a
+  multi-stream batch that rejection comes back as HTTP 500, which Alloy
+  retries forever, stalling all collection. The cost: after more than 1h of
+  Alloy downtime, the older part of the gap is not backfilled.
+- **Alloy's read positions live on the node** (`/var/lib/alloy`), not the
+  chart's default `/tmp`, so restarts resume instead of re-sending every file.
+- **Loki query sharding is off.** With it on, metric queries such as
+  `count_over_time` multiplied results by the shard count (285 reported vs 15
+  real lines).
+- **Grafana's sidecars set `DISABLE_X509_STRICT_VERIFICATION`.** The microk8s
+  cluster CA has no Key Usage extension, which Python 3.13+ rejects under
+  strict verification; the sidecars crash-looped and Grafana had no
+  datasources or dashboards. The API server cert is still verified.
+- **kube-prometheus-stack's etcd, scheduler, controller-manager and
+  kube-proxy monitors are disabled.** microk8s runs them inside kubelite, so
+  they never had targets.
 
 ![Monitoring Namespace](../assets/images/monitoring-namespace.png)
 

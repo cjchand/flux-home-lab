@@ -14,7 +14,7 @@ Promtail, Grafana 10.3.3) with current, Renovate-tracked components.
 - Logs from every pod on all three nodes are searchable in Grafana at
   `grafana.internal`.
 - No deprecated components remain: `loki-stack` and Promtail are gone, and
-  Grafana is on 12.x.
+  Grafana is on 13.x (the version kube-prometheus-stack 91.8.2 ships).
 - The Uptime Kuma monitor "Teslamate - Tesla API Reachable" is green against
   the new Loki.
 - Grafana also serves the standard kube-prometheus-stack dashboards against

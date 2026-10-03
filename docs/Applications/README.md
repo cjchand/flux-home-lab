@@ -9,7 +9,7 @@ The home lab currently hosts the following applications and services, organized 
 - **[Home Automation](./Home-Automation.md)** - Home Assistant, Homebridge
 
 ## Monitoring & Observability
-- **[Monitoring & Observability](./Monitoring.md)** - Loki Stack, Uptime Kuma
+- **[Monitoring & Observability](./Monitoring.md)** - Loki, Alloy & Grafana, Uptime Kuma
 
 ## Applications
 
@@ -24,7 +24,7 @@ The home lab currently hosts the following applications and services, organized 
 - **[Homebridge](./Home-Automation.md#homebridge)** - HomeKit bridge for non-HomeKit devices
 
 ### Monitoring & Observability
-- **[Loki Stack](./Monitoring.md#loki-stack)** - Log aggregation and visualization (Grafana + Loki)
+- **[Loki, Alloy & Grafana](./Monitoring.md#logging)** - Log collection, search and dashboards
 - **[Uptime Kuma](./Monitoring.md#uptime-kuma)** - Uptime monitoring and status page
 
 ### Applications

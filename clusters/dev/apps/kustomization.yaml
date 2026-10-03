@@ -8,7 +8,6 @@ resources:
   - homeassistant/
   - homepage/
   - loki/
-  - loki-stack/
   - metallb/
   - prometheus/
   - coder/
