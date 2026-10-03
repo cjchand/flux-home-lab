@@ -44,6 +44,12 @@ spec:
       compactor:
         retention_enabled: true
         delete_request_store: filesystem
+      # Sharded metric queries (count_over_time, rate, ...) multiplied results
+      # by the shard count here -- e.g. 285 vs 15 actual lines -- because data
+      # still in the ingester was counted by every shard. At this volume
+      # (~200 lines/min) sharding buys nothing, so turn it off.
+      query_range:
+        parallelise_shardable_queries: false
 
     singleBinary:
       replicas: 1
