@@ -60,6 +60,16 @@ spec:
         limits:
           cpu: 500m
           memory: 512Mi
+      # microk8s's cluster CA has no Key Usage extension, which k8s-sidecar
+      # (Python 3.13+) rejects under strict X.509 verification and crash-loops.
+      # This relaxes only that flag; the API server cert is still verified.
+      sidecar:
+        dashboards:
+          env:
+            DISABLE_X509_STRICT_VERIFICATION: "true"
+        datasources:
+          env:
+            DISABLE_X509_STRICT_VERIFICATION: "true"
 
     # microk8s runs etcd, the scheduler, controller-manager and kube-proxy
     # inside kubelite, so these ServiceMonitors never find a target. Disabling
