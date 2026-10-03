@@ -196,6 +196,16 @@ cameras:
       mask:
         - 0.031,0.218,0.031,0.295,0.062,0.297,0.062,0.213
         - 0.226,0.171,0.233,0.276,0.287,0.277,0.286,0.154
+      # Since the switch to YOLOv9, the model reads two fixed spots as a person
+      # (mostly at night on IR): the gap between the car's front and the wall,
+      # and the stacked chair/mower. Confidence can't separate them (phantoms
+      # scored up to 78%, real people as low as 75%), but size can: across 36
+      # reviewed events every phantom box was <=16,240 px and every real person
+      # >=22,750 px, since anyone in this small garage is close to the camera.
+      # Pixels at the 640x480 detect resolution.
+      filters:
+        person:
+          min_area: 20000
     record:
       enabled: true
     snapshots:
