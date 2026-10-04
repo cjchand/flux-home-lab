@@ -74,6 +74,12 @@ ffmpeg:
 # Do NOT auto-update Reolink firmware once working: https://github.com/AT0myks/reolink-fw-archive
 # Reolink E1 Pro is a WiFi camera — it does not support the bcs HTTP-FLV stream
 # format used by Reolink NVR/PoE cameras. Use plain RTSP instead.
+#
+# The doorbell is the exception: it does serve HTTP-FLV, and its RTSP main
+# stream was arriving damaged (go2rtc "RTP header size insufficient" / "RTSP
+# wrong input"). Recorded as-is, 11% of an hour's segments had corrupt H.264 and
+# 94% had duplicate timestamps, which macOS's hardware decoder refuses
+# (Chrome/Safari playback error -12909). A 30 s HTTP-FLV capture had neither.
 go2rtc:
   streams:
     camera_kitchen:
@@ -93,7 +99,7 @@ go2rtc:
     camera_garage_sub:
       - "rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.86.47:554/h264Preview_01_sub"
     camera_doorbell:
-      - "rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.86.62:554/h264Preview_01_main"
+      - "ffmpeg:http://192.168.86.62/flv?port=1935&app=bcs&stream=channel0_main.bcs&user=admin&password={FRIGATE_RTSP_PASSWORD}#video=copy#audio=copy"
     camera_doorbell_sub:
       - "rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.86.62:554/h264Preview_01_sub"
 
