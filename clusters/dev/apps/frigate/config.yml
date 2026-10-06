@@ -80,9 +80,14 @@ ffmpeg:
 # wrong input"). Recorded as-is, 11% of an hour's segments had corrupt H.264 and
 # 94% had duplicate timestamps, which macOS's hardware decoder refuses
 # (Chrome/Safari playback error -12909). A 30 s HTTP-FLV capture had neither.
-# Fetched over HTTPS so the password isn't sent in the clear. The camera's
-# certificate is Reolink's generic self-signed one (CN=CERTIFICATE); go2rtc and
-# ffmpeg don't verify it. Requires HTTPS enabled in the camera's Server Settings.
+#
+# Plain HTTP, not HTTPS. HTTPS worked (go2rtc and ffmpeg accept the camera's
+# self-signed cert) and recorded cleanly, but from the moment it went live the
+# doorbell's detect process crashed every few minutes with a VAAPI "Failed to
+# sync surface" error (~16/h in daylight), surviving a Frigate restart. The 76
+# minutes on HTTP beforehand had none. Suspected cause: TLS for the main stream
+# overloads the camera's CPU and degrades the sub stream that VAAPI decodes.
+# Requires HTTP enabled in the camera's Server Settings.
 go2rtc:
   streams:
     camera_kitchen:
@@ -102,7 +107,7 @@ go2rtc:
     camera_garage_sub:
       - "rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.86.47:554/h264Preview_01_sub"
     camera_doorbell:
-      - "ffmpeg:https://192.168.86.62/flv?port=1935&app=bcs&stream=channel0_main.bcs&user=admin&password={FRIGATE_RTSP_PASSWORD}#video=copy#audio=copy"
+      - "ffmpeg:http://192.168.86.62/flv?port=1935&app=bcs&stream=channel0_main.bcs&user=admin&password={FRIGATE_RTSP_PASSWORD}#video=copy#audio=copy"
     camera_doorbell_sub:
       - "rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.86.62:554/h264Preview_01_sub"
 
