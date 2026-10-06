@@ -81,13 +81,10 @@ ffmpeg:
 # 94% had duplicate timestamps, which macOS's hardware decoder refuses
 # (Chrome/Safari playback error -12909). A 30 s HTTP-FLV capture had neither.
 #
-# Plain HTTP, not HTTPS. HTTPS worked (go2rtc and ffmpeg accept the camera's
-# self-signed cert) and recorded cleanly, but from the moment it went live the
-# doorbell's detect process crashed every few minutes with a VAAPI "Failed to
-# sync surface" error (~16/h in daylight), surviving a Frigate restart. The 76
-# minutes on HTTP beforehand had none. Suspected cause: TLS for the main stream
-# overloads the camera's CPU and degrades the sub stream that VAAPI decodes.
-# Requires HTTP enabled in the camera's Server Settings.
+# Plain HTTP. HTTPS also works (go2rtc and ffmpeg accept the camera's
+# self-signed cert) and recorded just as cleanly; HTTPS is currently disabled on
+# the camera, so switching back means enabling it there first. Requires HTTP
+# enabled in the camera's Server Settings.
 go2rtc:
   streams:
     camera_kitchen:
@@ -227,6 +224,13 @@ cameras:
 
   camera_doorbell:
     ffmpeg:
+      # Software decode for this camera's detect stream. With VAAPI, its detect
+      # ffmpeg crashed every 2–5 minutes in daylight ("Failed to sync surface"),
+      # regardless of Frigate restarts or whether the main stream came over
+      # HTTP or HTTPS. Only the doorbell does this; the other cameras stay on
+      # the global preset-vaapi. An empty list (not "") is what Frigate treats
+      # as "no hwaccel" rather than "inherit the global setting".
+      hwaccel_args: []
       inputs:
         - path: rtsp://127.0.0.1:8554/camera_doorbell
           input_args: preset-rtsp-restream
