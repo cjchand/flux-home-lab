@@ -4,7 +4,7 @@ metadata:
   name: frigate-overnight-summary
   namespace: frigate
 spec:
-  schedule: "0 7 * * *"
+  schedule: "0 6 * * *"
   timeZone: "America/Chicago"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3

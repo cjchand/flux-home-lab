@@ -1,5 +1,5 @@
 # Indoor camera schedule: Frigate detection and recording ON overnight
-# (23:00–07:00), OFF during the day. The doorbell is not part of this; it runs
+# (23:00–06:00), OFF during the day. The doorbell is not part of this; it runs
 # 24/7 (detect.enabled: true in the Frigate config).
 #
 # One automation enforces the state rather than separate on/off automations,
@@ -18,7 +18,7 @@ automation:
     alias: Frigate - Enforce indoor camera schedule
     triggers:
       - trigger: time
-        at: "07:00:00"
+        at: "06:00:00"
       - trigger: time
         at: "23:00:00"
       # Frigate publishes this (retained) on every start.
@@ -34,7 +34,7 @@ automation:
       - if:
           - condition: time
             after: "23:00:00"
-            before: "07:00:00"
+            before: "06:00:00"
         then:
           - action: switch.turn_on
             target:

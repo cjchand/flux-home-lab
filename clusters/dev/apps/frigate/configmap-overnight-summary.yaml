@@ -34,10 +34,10 @@ data:
     EXCLUDED_CAMERAS = {"camera_doorbell"}
 
     def get_events():
-        # Script runs at 7am Chicago time; look back 9 hours to cover 10pm–7am
+        # Script runs at 6am Chicago time; look back 8 hours to cover 10pm–6am
         now_utc = datetime.now(timezone.utc)
         before = int(now_utc.timestamp())
-        after = int((now_utc - timedelta(hours=9)).timestamp())
+        after = int((now_utc - timedelta(hours=8)).timestamp())
         url = f"{FRIGATE_URL}/api/events?label=person&after={after}&before={before}&limit=100"
         with urllib.request.urlopen(url, timeout=10) as r:
             events = json.loads(r.read())
