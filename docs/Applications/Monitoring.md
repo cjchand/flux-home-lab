@@ -59,6 +59,15 @@ Uptime Kuma provides real-time monitoring of services and applications, with a b
 - Docker support
 
 ![Monitoring Namespace](../assets/images/monitoring-namespace.png) 
+### Monitors
+
+Monitors live in Uptime Kuma's database, so Flux can't apply them. The
+standard set (an HTTPS check per ingress host, TCP checks for Mosquitto and
+Loki) is defined in `scripts/sync-uptime-kuma-monitors.py`, which creates any
+that are missing and leaves existing ones alone. Run it with `--dry-run`
+first; usage is in the script's docstring. Special-purpose monitors (e.g.
+`monitor-queries/`) are still created by hand.
+
 ### Storage: MariaDB on NFS, not SQLite on NFS
 
 Uptime Kuma's database runs on a dedicated MariaDB StatefulSet
