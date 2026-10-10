@@ -48,6 +48,10 @@ spec:
         - hosts:
             - teslamate-grafana.internal
           secretName: teslamate-grafana-tls
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
     env:
       DATABASE_HOST: teslamate-postgres-nfs-postgresql
       DATABASE_PORT: 5432

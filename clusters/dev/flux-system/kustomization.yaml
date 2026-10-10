@@ -3,3 +3,34 @@ kind: Kustomization
 resources:
 - gotk-components.yaml
 - gotk-sync.yaml
+# Memory requests sized from observed usage; kept as patches so they survive
+# `flux install` / `flux bootstrap` regenerating gotk-components.yaml.
+patches:
+- target:
+    kind: Deployment
+    name: source-controller
+  patch: |
+    - op: replace
+      path: /spec/template/spec/containers/0/resources/requests/memory
+      value: 256Mi
+- target:
+    kind: Deployment
+    name: helm-controller
+  patch: |
+    - op: replace
+      path: /spec/template/spec/containers/0/resources/requests/memory
+      value: 192Mi
+- target:
+    kind: Deployment
+    name: kustomize-controller
+  patch: |
+    - op: replace
+      path: /spec/template/spec/containers/0/resources/requests/memory
+      value: 128Mi
+- target:
+    kind: Deployment
+    name: notification-controller
+  patch: |
+    - op: replace
+      path: /spec/template/spec/containers/0/resources/requests/memory
+      value: 128Mi

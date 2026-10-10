@@ -271,7 +271,7 @@ spec:
         limits: {}
         requests:
           cpu: 250m
-          memory: 256Mi
+          memory: 512Mi
       schedulerName: ""
       service:
         annotations: {}

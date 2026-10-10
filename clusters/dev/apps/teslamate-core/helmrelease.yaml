@@ -48,6 +48,10 @@ spec:
           - hosts:
               - teslamate.internal
             secretName: teslamate-tls
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
     env:
       - name: TZ 
         value: UTC

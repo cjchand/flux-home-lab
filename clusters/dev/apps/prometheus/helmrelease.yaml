@@ -56,10 +56,10 @@ spec:
       resources:
         requests:
           cpu: 50m
-          memory: 128Mi
+          memory: 512Mi
         limits:
           cpu: 500m
-          memory: 512Mi
+          memory: 1Gi
       # microk8s's cluster CA has no Key Usage extension, which k8s-sidecar
       # (Python 3.13+) rejects under strict X.509 verification and crash-loops.
       # This relaxes only that flag; the API server cert is still verified.
@@ -141,10 +141,10 @@ spec:
         resources:
           requests:
             cpu: 100m
-            memory: 512Mi
+            memory: 2Gi
           limits:
             cpu: 1000m
-            memory: 2Gi
+            memory: 3Gi
 
     kube-state-metrics:
       resources:

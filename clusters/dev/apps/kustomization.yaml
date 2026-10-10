@@ -10,7 +10,6 @@ resources:
   - loki/
   - metallb/
   - prometheus/
-  - coder/
   - tandoor/
   - teslamate/
   - traefik/

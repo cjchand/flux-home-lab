@@ -39,6 +39,11 @@ spec:
       SOCIAL_PROVIDERS: 
       # SECRET_KEY: changeme
 
+    resources:
+      requests:
+        cpu: 100m
+        memory: 1Gi
+
     service:
       # -- Configures service settings for the chart.
       # @default -- See [values.yaml](./values.yaml)

@@ -127,10 +127,10 @@ spec:
               # Tune after observing actual usage. CPU scales with camera count and
               # resolution. Start here and adjust based on `kubectl top pod -n frigate`.
               cpu: "2"
-              memory: 2Gi
+              memory: 3Gi
             limits:
               cpu: "4"
-              memory: 4Gi
+              memory: 6Gi
               # Intel HD 630 iGPU, advertised by the intel-gpu-plugin DaemonSet in
               # cluster-services. Requesting it both grants /dev/dri access and
               # constrains Frigate to a node with a free GPU slot.
