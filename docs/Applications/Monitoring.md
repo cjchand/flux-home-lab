@@ -68,6 +68,26 @@ that are missing and leaves existing ones alone. Run it with `--dry-run`
 first; usage is in the script's docstring. Special-purpose monitors (e.g.
 `monitor-queries/`) are still created by hand.
 
+**Synthetic monitors** (names start `Synthetic - `) exercise a real code path
+rather than just "is the port open":
+
+| Monitor | Type | Fails when |
+|---|---|---|
+| Frigate Cameras Streaming | json-query on `/api/stats` | any camera reports `camera_fps < 1` (dead RTSP stream) |
+| Scrape Targets Down | keyword (inverted) on Prometheus | any Prometheus target has `up == 0` |
+| Nodes Ready | keyword (inverted) on Prometheus | fewer than 3 nodes are Ready |
+| Pods Crash Looping | keyword (inverted) on Prometheus | any container is in `CrashLoopBackOff` |
+| PVC Over 90% | keyword (inverted) on Prometheus | any PVC is more than 90% full |
+| Mosquitto Pub/Sub | mqtt | the broker doesn't deliver `$SYS/broker/version` to a fresh subscriber |
+| DNS Internal / External (Pi-hole) | dns | Pi-hole (192.168.86.53) can't resolve `homepage.internal` / `example.com` |
+
+The Prometheus ones reuse the trick from the
+[Tesla API monitor](./monitor-queries/teslamate-tesla-api-reachable.md): the
+threshold is evaluated in PromQL, so the result vector is empty (no `"value"`
+substring) while healthy. The keyword is inverted, so finding it means
+something is wrong. Don't rewrite them with `or vector(0)`; that makes the
+vector always present.
+
 ### Storage: MariaDB on NFS, not SQLite on NFS
 
 Uptime Kuma's database runs on a dedicated MariaDB StatefulSet
