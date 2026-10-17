@@ -72,8 +72,9 @@ ffmpeg:
 # instability in Frigate. See: https://docs.frigate.video/configuration/camera_specific/
 # Enable HTTP on each camera: Reolink app → Camera Settings → Network → Advanced → HTTP
 # Do NOT auto-update Reolink firmware once working: https://github.com/AT0myks/reolink-fw-archive
-# Reolink E1 Pro is a WiFi camera — it does not support the bcs HTTP-FLV stream
-# format used by Reolink NVR/PoE cameras. Use plain RTSP instead.
+# Reolink E1 Pro (firmware v3.1.0.4417): its HTTP port answers the CGI API but
+# closes the connection on the bcs HTTP-FLV endpoint (/flv?app=bcs&stream=
+# channel0_main|channel0_ext|channel0_sub.bcs), tested 2026-10-17. Use RTSP.
 #
 # The doorbell is the exception: it does serve HTTP-FLV, and its RTSP main
 # stream was arriving damaged (go2rtc "RTP header size insufficient" / "RTSP
