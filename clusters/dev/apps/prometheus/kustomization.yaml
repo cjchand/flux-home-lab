@@ -6,3 +6,4 @@ resources:
   - helm-repository.yaml
   - grafana-admin-sealedsecret.yaml
   - helmrelease.yaml
+  - frigate-ingest-rule.yaml

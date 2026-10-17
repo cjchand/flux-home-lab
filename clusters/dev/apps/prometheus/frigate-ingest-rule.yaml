@@ -1,0 +1,28 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: frigate-camera-ingest
+  namespace: monitoring
+  labels:
+    # Must match the Prometheus ruleSelector (release: prometheus)
+    release: prometheus
+spec:
+  groups:
+    - name: frigate-camera-ingest
+      rules:
+        # With 4 WiFi cameras + doorbell healthy, the Frigate pod receives ~36-39 Mbps.
+        # In the 2026-10 incident the cameras' main streams stalled and this stepped
+        # down to ~30, then ~20 Mbps while recordings became undecodable (-12909).
+        # A camera reboot restored it.
+        - alert: FrigateCameraIngestLow
+          expr: |
+            sum(rate(container_network_receive_bytes_total{namespace="frigate", pod=~"frigate-[0-9a-f]+-[a-z0-9]+"}[10m])) * 8 / 1e6 < 33
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: Frigate camera ingest is below normal
+            description: >-
+              Frigate is receiving {{ $value | humanize }} Mbps (normal is ~36-39).
+              A camera main stream is likely stalling; recordings may fail to play.
+              Try rebooting the cameras.
