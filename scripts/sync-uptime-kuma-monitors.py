@@ -11,6 +11,12 @@ name, are left alone, so hand-tuned settings survive).
     ./scripts/sync-uptime-kuma-monitors.py --dry-run
     ./scripts/sync-uptime-kuma-monitors.py
 
+Every monitor is attached to the Slack notifier named by --notifier (default
+"#homelab-alerts (Slack)", must already exist in Kuma). Existing monitors that lack it
+get it added; their other notifiers are left alone.
+
+Pass --insecure to skip TLS verification of the Kuma URL (internal CA).
+
 If the internal CA isn't trusted by your machine, set SSL_CERT_FILE (or
 REQUESTS_CA_BUNDLE) to the CA cert; see scripts/generate-internal-ca.sh.
 """
@@ -24,7 +30,6 @@ from uptime_kuma_api import MonitorType, UptimeKumaApi
 # (name, url) - ingress hosts from clusters/dev/apps/*. Certs come from the
 # internal CA, which the Kuma pod doesn't trust, so TLS errors are ignored.
 HTTP_MONITORS = [
-    ("Coder", "https://coder.internal"),
     ("Frigate", "https://frigate.internal"),
     ("Grafana", "https://grafana.internal"),
     ("Home Assistant", "https://homeassistant.internal"),
@@ -75,6 +80,8 @@ PROM_MONITORS = [
 FRIGATE_STATS = "http://frigate.frigate.svc.cluster.local:5000/api/stats"
 FRIGATE_JSONATA = "$count(cameras.*[camera_fps < 1]) = 0"
 
+NOTIFIER = "#homelab-alerts (Slack)"
+
 INTERVAL = 60
 RETRIES = 2
 
@@ -87,7 +94,8 @@ def wanted():
         yield dict(type=MonitorType.PORT, name=name, hostname=host, port=port)
 
     yield dict(type=MonitorType.JSON_QUERY, name="Synthetic - Frigate Cameras Streaming",
-               url=FRIGATE_STATS, jsonPath=FRIGATE_JSONATA, expectedValue="true")
+               url=FRIGATE_STATS, jsonPath=FRIGATE_JSONATA, expectedValue="true",
+               jsonPathOperator="==")
     for name, promql, bad in PROM_MONITORS:
         yield dict(type=MonitorType.KEYWORD, name=name, keyword='"value"',
                    invertKeyword=bad,
@@ -107,19 +115,48 @@ def wanted():
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--notifier", default=NOTIFIER,
+                    help="name of the Kuma notification to attach (default: %(default)s)")
+    ap.add_argument("--insecure", action="store_true",
+                    help="don't verify the Kuma server's TLS certificate")
     args = ap.parse_args()
 
-    api = UptimeKumaApi(os.environ.get("KUMA_URL", "https://monitoring.internal"))
+    api = UptimeKumaApi(os.environ.get("KUMA_URL", "https://monitoring.internal"),
+                       ssl_verify=not args.insecure)
     try:
         api.login(os.environ["KUMA_USER"], os.environ["KUMA_PASSWORD"])
-        existing = {m["name"] for m in api.get_monitors()}
+        notifiers = {n["name"]: n["id"] for n in api.get_notifications()}
+        if args.notifier not in notifiers:
+            sys.exit(f"no notification named {args.notifier!r}; "
+                     f"available: {', '.join(sorted(notifiers)) or '(none)'}")
+        nid = notifiers[args.notifier]
+        existing = {m["name"]: m for m in api.get_monitors()}
         for mon in wanted():
+            # Kuma 2.x json-query monitors need a comparison operator, but the
+            # client library's add_monitor can't set it, so it's applied with
+            # edit_monitor (which passes extra fields through).
+            operator = mon.pop("jsonPathOperator", None)
             if mon["name"] in existing:
-                print(f"exists   {mon['name']}")
+                cur = existing[mon["name"]]
+                fixes = {}
+                if operator and cur.get("jsonPathOperator") != operator:
+                    fixes["jsonPathOperator"] = operator
+                ids = list(cur.get("notificationIDList") or [])
+                if nid not in ids:
+                    fixes["notificationIDList"] = ids + [nid]
+                if fixes:
+                    print(f"{'would fix' if args.dry_run else 'fixing  '} {mon['name']} ({', '.join(fixes)})")
+                    if not args.dry_run:
+                        api.edit_monitor(cur["id"], **fixes)
+                else:
+                    print(f"exists   {mon['name']}")
                 continue
             print(f"{'would add' if args.dry_run else 'adding  '} {mon['name']}")
             if not args.dry_run:
-                api.add_monitor(interval=INTERVAL, maxretries=RETRIES, **mon)
+                res = api.add_monitor(interval=INTERVAL, maxretries=RETRIES,
+                                      notificationIDList=[nid], **mon)
+                if operator:
+                    api.edit_monitor(res["monitorID"], jsonPathOperator=operator)
     finally:
         api.disconnect()
 
