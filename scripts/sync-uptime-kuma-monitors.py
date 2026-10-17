@@ -87,7 +87,8 @@ def wanted():
         yield dict(type=MonitorType.PORT, name=name, hostname=host, port=port)
 
     yield dict(type=MonitorType.JSON_QUERY, name="Synthetic - Frigate Cameras Streaming",
-               url=FRIGATE_STATS, jsonPath=FRIGATE_JSONATA, expectedValue="true")
+               url=FRIGATE_STATS, jsonPath=FRIGATE_JSONATA, expectedValue="true",
+               jsonPathOperator="==")
     for name, promql, bad in PROM_MONITORS:
         yield dict(type=MonitorType.KEYWORD, name=name, keyword='"value"',
                    invertKeyword=bad,
@@ -112,14 +113,26 @@ def main():
     api = UptimeKumaApi(os.environ.get("KUMA_URL", "https://monitoring.internal"))
     try:
         api.login(os.environ["KUMA_USER"], os.environ["KUMA_PASSWORD"])
-        existing = {m["name"] for m in api.get_monitors()}
+        existing = {m["name"]: m for m in api.get_monitors()}
         for mon in wanted():
+            # Kuma 2.x json-query monitors need a comparison operator, but the
+            # client library's add_monitor can't set it, so it's applied with
+            # edit_monitor (which passes extra fields through).
+            operator = mon.pop("jsonPathOperator", None)
             if mon["name"] in existing:
-                print(f"exists   {mon['name']}")
+                cur = existing[mon["name"]]
+                if operator and cur.get("jsonPathOperator") != operator:
+                    print(f"{'would fix' if args.dry_run else 'fixing  '} {mon['name']} (operator {operator})")
+                    if not args.dry_run:
+                        api.edit_monitor(cur["id"], jsonPathOperator=operator)
+                else:
+                    print(f"exists   {mon['name']}")
                 continue
             print(f"{'would add' if args.dry_run else 'adding  '} {mon['name']}")
             if not args.dry_run:
-                api.add_monitor(interval=INTERVAL, maxretries=RETRIES, **mon)
+                res = api.add_monitor(interval=INTERVAL, maxretries=RETRIES, **mon)
+                if operator:
+                    api.edit_monitor(res["monitorID"], jsonPathOperator=operator)
     finally:
         api.disconnect()
 
