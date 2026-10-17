@@ -12,7 +12,7 @@ name, are left alone, so hand-tuned settings survive).
     ./scripts/sync-uptime-kuma-monitors.py
 
 Every monitor is attached to the Slack notifier named by --notifier (default
-"#homelab-alerts", must already exist in Kuma). Existing monitors that lack it
+"#homelab-alerts (Slack)", must already exist in Kuma). Existing monitors that lack it
 get it added; their other notifiers are left alone.
 
 Pass --insecure to skip TLS verification of the Kuma URL (internal CA).
@@ -81,7 +81,7 @@ PROM_MONITORS = [
 FRIGATE_STATS = "http://frigate.frigate.svc.cluster.local:5000/api/stats"
 FRIGATE_JSONATA = "$count(cameras.*[camera_fps < 1]) = 0"
 
-NOTIFIER = "#homelab-alerts"
+NOTIFIER = "#homelab-alerts (Slack)"
 
 INTERVAL = 60
 RETRIES = 2
