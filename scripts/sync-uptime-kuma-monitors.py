@@ -30,7 +30,6 @@ from uptime_kuma_api import MonitorType, UptimeKumaApi
 # (name, url) - ingress hosts from clusters/dev/apps/*. Certs come from the
 # internal CA, which the Kuma pod doesn't trust, so TLS errors are ignored.
 HTTP_MONITORS = [
-    ("Coder", "https://coder.internal"),
     ("Frigate", "https://frigate.internal"),
     ("Grafana", "https://grafana.internal"),
     ("Home Assistant", "https://homeassistant.internal"),
