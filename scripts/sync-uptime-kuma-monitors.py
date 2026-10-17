@@ -11,6 +11,8 @@ name, are left alone, so hand-tuned settings survive).
     ./scripts/sync-uptime-kuma-monitors.py --dry-run
     ./scripts/sync-uptime-kuma-monitors.py
 
+Pass --insecure to skip TLS verification of the Kuma URL (internal CA).
+
 If the internal CA isn't trusted by your machine, set SSL_CERT_FILE (or
 REQUESTS_CA_BUNDLE) to the CA cert; see scripts/generate-internal-ca.sh.
 """
@@ -108,9 +110,12 @@ def wanted():
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--insecure", action="store_true",
+                    help="don't verify the Kuma server's TLS certificate")
     args = ap.parse_args()
 
-    api = UptimeKumaApi(os.environ.get("KUMA_URL", "https://monitoring.internal"))
+    api = UptimeKumaApi(os.environ.get("KUMA_URL", "https://monitoring.internal"),
+                       ssl_verify=not args.insecure)
     try:
         api.login(os.environ["KUMA_USER"], os.environ["KUMA_PASSWORD"])
         existing = {m["name"]: m for m in api.get_monitors()}
