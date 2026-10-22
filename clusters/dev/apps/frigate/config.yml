@@ -96,9 +96,9 @@ go2rtc:
     camera_living_room_sub:
       - "rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.86.66:554/h264Preview_01_sub"
     camera_workout_room:
-      - "rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.86.65:554/h264Preview_01_main"
+      - "rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.86.63:554/h264Preview_01_main"
     camera_workout_room_sub:
-      - "rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.86.65:554/h264Preview_01_sub"
+      - "rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.86.63:554/h264Preview_01_sub"
     camera_garage:
       - "rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.86.47:554/h264Preview_01_main"
     camera_garage_sub:
