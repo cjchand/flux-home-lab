@@ -205,6 +205,15 @@ cameras:
 
   camera_garage:
     ffmpeg:
+      # Software decode for the detect stream, as an A/B test started
+      # 2026-10-28. The garage reconnects to go2rtc many times an hour, and
+      # each reconnect jumps the stream's timestamps. Its VAAPI detect ffmpeg
+      # then hits "exceeded fps limit" 30-60 s later and usually has to be
+      # force-killed. Kernel OOM logs (10-12, 10-14) show the memory growth
+      # behind the OOMKills was in frigate.capture, which reads this process's
+      # output. Compare kills, force-kills and capture RSS against VAAPI before
+      # deciding whether to keep this.
+      hwaccel_args: []
       inputs:
         - path: rtsp://127.0.0.1:8554/camera_garage
           input_args: preset-rtsp-restream
