@@ -1,0 +1,79 @@
+# Restarts a Frigate record ffmpeg that has fallen into 2-second segments.
+# See configmap-recorder-watchdog.yaml for why.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: frigate-recorder-watchdog
+  namespace: frigate
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: frigate-recorder-watchdog
+  namespace: frigate
+rules:
+  # kubectl exec deploy/frigate resolves the deployment to one of its pods
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    resourceNames: ["frigate"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: frigate-recorder-watchdog
+  namespace: frigate
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: frigate-recorder-watchdog
+subjects:
+  - kind: ServiceAccount
+    name: frigate-recorder-watchdog
+    namespace: frigate
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: frigate-recorder-watchdog
+  namespace: frigate
+spec:
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 120
+      template:
+        spec:
+          serviceAccountName: frigate-recorder-watchdog
+          restartPolicy: Never
+          containers:
+            - name: watchdog
+              image: alpine/k8s:1.33.13
+              command:
+                - sh
+                - -c
+                - kubectl -n frigate exec -i deploy/frigate -c frigate -- python3 - < /scripts/check-recorders.py
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+              resources:
+                requests:
+                  cpu: 20m
+                  memory: 32Mi
+                limits:
+                  cpu: 200m
+                  memory: 128Mi
+          volumes:
+            - name: scripts
+              configMap:
+                name: frigate-recorder-watchdog-script
