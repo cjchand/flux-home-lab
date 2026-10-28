@@ -14,6 +14,8 @@ resources:
   - configmap-overnight-summary.yaml
   - cronjob-overnight-summary.yaml
   - sealed-secret-overnight-summary.yaml
+  - configmap-recorder-watchdog.yaml
+  - cronjob-recorder-watchdog.yaml
 
 # frigate-config is generated rather than checked in as a static ConfigMap so that
 # Kustomize appends a content hash to its name. That hash flows into the Deployment's

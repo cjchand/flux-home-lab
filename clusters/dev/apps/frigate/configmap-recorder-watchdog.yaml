@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frigate-recorder-watchdog-script
+  namespace: frigate
+data:
+  # Piped into the frigate container by cronjob-recorder-watchdog.yaml, so it
+  # runs with Frigate's own python and can see (and signal) the record ffmpeg
+  # processes. Pass --dry-run to only report.
+  #
+  # Why: when go2rtc reconnects to a camera, the stream's timestamps can jump
+  # hours forward, and a record ffmpeg that cuts on stream time then cuts a
+  # segment at every keyframe (2 s apart) instead of every 10 s, for hours.
+  # Frigate's own watchdog doesn't notice, because segments are still being
+  # created. An hour with more than ~1080 segments can't be played back in the
+  # review UI: nginx-vod rejects the hour's playlist ("invalid number of
+  # elements in the durations array") and the player spins forever. Seen on
+  # 2026-10-28, when three Living Room hours had 1404-1539 segments.
+  #
+  # config.yml now cuts on the wall clock (-segment_atclocktime 1), which
+  # prevents this. This is the backstop: restarting the recorder puts it back
+  # on 10 s segments.
+  #
+  # It samples /tmp/cache rather than the recordings API, because Frigate
+  # discards segments without motion, and a quiet camera would look healthy in
+  # the API even while stuck.
+  check-recorders.py: |
+    import os
+    import signal
+    import sys
+    import time
+
+    DRY_RUN = "--dry-run" in sys.argv
+    CACHE = "/tmp/cache"
+    SAMPLE_SECONDS = 30
+    # 10 s segments: ~3 new files per camera in 30 s. Stuck: ~15.
+    MAX_NEW_SEGMENTS = 8
+
+
+    def record_processes():
+        """Map camera name -> pid of its record ffmpeg."""
+        procs = {}
+        for pid in filter(str.isdigit, os.listdir("/proc")):
+            try:
+                with open(f"/proc/{pid}/cmdline", "rb") as f:
+                    args = f.read().decode(errors="replace").split("\0")
+            except OSError:
+                continue
+            if not args or not args[0].endswith("ffmpeg") or "segment" not in args:
+                continue
+            for arg in args:
+                if arg.startswith(f"{CACHE}/") and "@" in arg:
+                    procs[arg[len(CACHE) + 1:].split("@")[0]] = int(pid)
+        return procs
+
+
+    def cache_segments():
+        # camera_x@20261028063945-0500.mp4; previews are preview_camera_x_...
+        return {f for f in os.listdir(CACHE) if "@" in f and f.endswith(".mp4")}
+
+
+    seen = cache_segments()
+    new = {}
+    deadline = time.time() + SAMPLE_SECONDS
+    while time.time() < deadline:
+        time.sleep(1)
+        current = cache_segments()
+        for f in current - seen:
+            new.setdefault(f.split("@")[0], set()).add(f)
+        seen |= current
+
+    for camera, pid in sorted(record_processes().items()):
+        count = len(new.get(camera, ()))
+        stuck = count > MAX_NEW_SEGMENTS
+        print(f"{camera}: {count} new segments in {SAMPLE_SECONDS}s"
+              + (" -> SHORT SEGMENTS" if stuck else ""))
+        if stuck:
+            if DRY_RUN:
+                print(f"{camera}: dry run, would restart record ffmpeg pid {pid}")
+            else:
+                os.kill(pid, signal.SIGTERM)
+                print(f"{camera}: sent SIGTERM to record ffmpeg pid {pid}; "
+                      "Frigate's watchdog will restart it")

@@ -73,8 +73,19 @@ ffmpeg:
   # noon reboot, stopped writing segments while still reading the stream, and
   # grew to 3.1 GB (pod memory 1.85 to 4.9 GB of the 6Gi limit). That buffering
   # is the likely source of the earlier OOMKills.
+  #
+  # This is preset-record-generic-audio-copy plus -segment_atclocktime 1, which
+  # makes ffmpeg cut segments on the wall clock instead of on stream
+  # timestamps. When go2rtc reconnects to a camera, the stream it relays to the
+  # recorder jumps in timestamp by however far apart the camera's old and new
+  # RTP clocks are (+11.8 h in one capture on 2026-10-28). With timestamp-based
+  # cutting, a jump forward makes ffmpeg cut at every keyframe (2 s segments)
+  # for hours. A jump back stops it cutting at all, until Frigate's 120 s
+  # watchdog restarts it. Hours with more than ~1080 of those 2 s segments
+  # can't be played back in the review UI. A side-by-side test through the
+  # same jump: the preset went to 2 s segments, this kept 10 s segments.
   output_args:
-    record: preset-record-generic-audio-copy
+    record: -f segment -segment_time 10 -segment_atclocktime 1 -segment_format mp4 -reset_timestamps 1 -strftime 1 -c copy
 
 # HTTP-FLV is used instead of raw RTSP — Reolink's RTSP implementation has known
 # instability in Frigate. See: https://docs.frigate.video/configuration/camera_specific/
