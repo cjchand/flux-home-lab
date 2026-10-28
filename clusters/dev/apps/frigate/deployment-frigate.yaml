@@ -130,7 +130,10 @@ spec:
               memory: 3Gi
             limits:
               cpu: "4"
-              memory: 6Gi
+              # Normal usage is ~3 GB. Frigate still leaks memory while a camera
+              # flaps (2026-10-27: 3.1 GB to the old 6Gi limit and an OOMKill after
+              # ~8 h of garage WiFi drops). 8Gi buys headroom; it isn't a fix.
+              memory: 8Gi
               # Intel HD 630 iGPU, advertised by the intel-gpu-plugin DaemonSet in
               # cluster-services. Requesting it both grants /dev/dri access and
               # constrains Frigate to a node with a free GPU slot.
