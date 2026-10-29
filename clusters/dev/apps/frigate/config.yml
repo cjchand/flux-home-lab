@@ -105,6 +105,13 @@ ffmpeg:
 # self-signed cert) and recorded just as cleanly; HTTPS is currently disabled on
 # the camera, so switching back means enabling it there first. Requires HTTP
 # enabled in the camera's Server Settings.
+#
+# FLV carries the H.264 SPS/PPS headers only once, out of band, so the
+# restream had none in-band; Reolink's RTSP repeats them before every
+# keyframe. HA's HomeKit bridge passes video through (video_codec: copy)
+# without adding them, so Apple Home never got the headers and the doorbell
+# spun forever while the RTSP cameras played (found 2026-10-29). The
+# h264_mp4toannexb filter writes them back in front of each keyframe.
 go2rtc:
   streams:
     camera_kitchen:
@@ -124,7 +131,7 @@ go2rtc:
     camera_garage_sub:
       - "rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.86.47:554/h264Preview_01_sub"
     camera_doorbell:
-      - "ffmpeg:http://192.168.86.62/flv?port=1935&app=bcs&stream=channel0_main.bcs&user=admin&password={FRIGATE_RTSP_PASSWORD}#video=copy#audio=copy"
+      - "ffmpeg:http://192.168.86.62/flv?port=1935&app=bcs&stream=channel0_main.bcs&user=admin&password={FRIGATE_RTSP_PASSWORD}#video=copy#audio=copy#raw=-bsf:v h264_mp4toannexb"
     camera_doorbell_sub:
       - "rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.86.62:554/h264Preview_01_sub"
 
