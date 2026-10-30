@@ -34,8 +34,16 @@ data:
   # 2026-10-29, when Living Room and garage saved nothing usable from 23:00 to
   # 04:00. So the script also probes each segment that finishes during the
   # sample and restarts a recorder whose video lasts under MIN_VIDEO_SECONDS.
+  #
+  # The audio track can freeze the same way on its own: video stays fine, but
+  # each segment holds a single audio packet stretched over 10 s instead of
+  # ~156, so playback is silent. Seen on the kitchen all night on 2026-10-30
+  # (and garage on 10-29) while the camera's live audio was fine. So it also
+  # restarts a recorder whose segment has an audio track with fewer than
+  # MIN_AUDIO_PACKETS packets.
   check-recorders.py: |
     import glob
+    import json
     import os
     import signal
     import subprocess
@@ -49,6 +57,8 @@ data:
     MAX_NEW_SEGMENTS = 8
     # Healthy segments hold ~10 s of video; frozen-timestamp ones ~0.07 s.
     MIN_VIDEO_SECONDS = 2
+    # Healthy 10 s segments hold ~156 AAC packets; frozen-audio ones hold 1.
+    MIN_AUDIO_PACKETS = 20
     FFPROBE = (sorted(glob.glob("/usr/lib/ffmpeg/*/bin/ffprobe")) or ["ffprobe"])[-1]
 
 
@@ -74,16 +84,20 @@ data:
         return {f for f in os.listdir(CACHE) if "@" in f and f.endswith(".mp4")}
 
 
-    def video_seconds(name):
-        """Video duration of a finished cache segment, or None if it's gone."""
+    def probe(name):
+        """(video seconds, audio packets or None if no audio) of a finished
+        cache segment, or None if it's gone."""
         try:
             out = subprocess.run(
-                [FFPROBE, "-v", "error", "-select_streams", "v:0",
-                 "-show_entries", "stream=duration", "-of", "csv=p=0",
-                 f"{CACHE}/{name}"],
+                [FFPROBE, "-v", "error", "-count_packets",
+                 "-show_entries", "stream=codec_type,duration,nb_read_packets",
+                 "-of", "json", f"{CACHE}/{name}"],
                 capture_output=True, text=True, timeout=10).stdout
-            return float(out.strip())
-        except (ValueError, subprocess.SubprocessError):
+            streams = {s["codec_type"]: s for s in json.loads(out)["streams"]}
+            audio = streams.get("audio")
+            return (float(streams["video"]["duration"]),
+                    int(audio["nb_read_packets"]) if audio else None)
+        except (KeyError, ValueError, subprocess.SubprocessError):
             return None
 
 
@@ -93,7 +107,7 @@ data:
 
     seen = cache_segments()
     new = {}
-    durations = {}
+    probes = {}
     deadline = time.time() + SAMPLE_SECONDS
     while time.time() < deadline:
         time.sleep(1)
@@ -103,25 +117,27 @@ data:
             # A new file means the camera's previous one just finished; probe
             # it now, before Frigate moves it out of the cache.
             done = newest(seen, camera)
-            if done and camera not in durations:
-                seconds = video_seconds(done)
-                if seconds is not None:
-                    durations[camera] = seconds
+            if done and camera not in probes:
+                result = probe(done)
+                if result is not None:
+                    probes[camera] = result
             new.setdefault(camera, set()).add(f)
             seen.add(f)
         seen |= current
 
     for camera, pid in sorted(record_processes().items()):
         count = len(new.get(camera, ()))
-        seconds = durations.get(camera)
+        seconds, packets = probes.get(camera, (None, None))
         short = count > MAX_NEW_SEGMENTS
         frozen = seconds is not None and seconds < MIN_VIDEO_SECONDS
+        silent = packets is not None and packets < MIN_AUDIO_PACKETS
         print(f"{camera}: {count} new segments in {SAMPLE_SECONDS}s, "
-              + (f"last one {seconds:.2f}s of video" if seconds is not None
-                 else "none probed")
+              + (f"last one {seconds:.2f}s of video, {packets} audio packets"
+                 if camera in probes else "none probed")
               + (" -> SHORT SEGMENTS" if short else "")
-              + (" -> FROZEN TIMESTAMPS" if frozen else ""))
-        if short or frozen:
+              + (" -> FROZEN TIMESTAMPS" if frozen else "")
+              + (" -> FROZEN AUDIO" if silent else ""))
+        if short or frozen or silent:
             if DRY_RUN:
                 print(f"{camera}: dry run, would restart record ffmpeg pid {pid}")
             else:
