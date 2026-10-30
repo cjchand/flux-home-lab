@@ -24,9 +24,21 @@ data:
   # It samples /tmp/cache rather than the recordings API, because Frigate
   # discards segments without motion, and a quiet camera would look healthy in
   # the API even while stuck.
+  #
+  # A jump the other way (stream timestamps going back hours) is the second
+  # failure. With wall-clock cuts the segments still come every 10 s, but
+  # ffmpeg won't let video timestamps go backwards across its output, so it
+  # stamps each frame one tick after the last until the stream catches up
+  # with where it was. Each segment then holds 10 s of real video that claims
+  # to last ~0.07 s, and Frigate treats it as a 0.07 s recording. Seen
+  # 2026-10-29, when Living Room and garage saved nothing usable from 23:00 to
+  # 04:00. So the script also probes each segment that finishes during the
+  # sample and restarts a recorder whose video lasts under MIN_VIDEO_SECONDS.
   check-recorders.py: |
+    import glob
     import os
     import signal
+    import subprocess
     import sys
     import time
 
@@ -35,6 +47,9 @@ data:
     SAMPLE_SECONDS = 30
     # 10 s segments: ~3 new files per camera in 30 s. Stuck: ~15.
     MAX_NEW_SEGMENTS = 8
+    # Healthy segments hold ~10 s of video; frozen-timestamp ones ~0.07 s.
+    MIN_VIDEO_SECONDS = 2
+    FFPROBE = (sorted(glob.glob("/usr/lib/ffmpeg/*/bin/ffprobe")) or ["ffprobe"])[-1]
 
 
     def record_processes():
@@ -59,22 +74,54 @@ data:
         return {f for f in os.listdir(CACHE) if "@" in f and f.endswith(".mp4")}
 
 
+    def video_seconds(name):
+        """Video duration of a finished cache segment, or None if it's gone."""
+        try:
+            out = subprocess.run(
+                [FFPROBE, "-v", "error", "-select_streams", "v:0",
+                 "-show_entries", "stream=duration", "-of", "csv=p=0",
+                 f"{CACHE}/{name}"],
+                capture_output=True, text=True, timeout=10).stdout
+            return float(out.strip())
+        except (ValueError, subprocess.SubprocessError):
+            return None
+
+
+    def newest(files, camera):
+        return max((f for f in files if f.startswith(camera + "@")), default=None)
+
+
     seen = cache_segments()
     new = {}
+    durations = {}
     deadline = time.time() + SAMPLE_SECONDS
     while time.time() < deadline:
         time.sleep(1)
         current = cache_segments()
-        for f in current - seen:
-            new.setdefault(f.split("@")[0], set()).add(f)
+        for f in sorted(current - seen):
+            camera = f.split("@")[0]
+            # A new file means the camera's previous one just finished; probe
+            # it now, before Frigate moves it out of the cache.
+            done = newest(seen, camera)
+            if done and camera not in durations:
+                seconds = video_seconds(done)
+                if seconds is not None:
+                    durations[camera] = seconds
+            new.setdefault(camera, set()).add(f)
+            seen.add(f)
         seen |= current
 
     for camera, pid in sorted(record_processes().items()):
         count = len(new.get(camera, ()))
-        stuck = count > MAX_NEW_SEGMENTS
-        print(f"{camera}: {count} new segments in {SAMPLE_SECONDS}s"
-              + (" -> SHORT SEGMENTS" if stuck else ""))
-        if stuck:
+        seconds = durations.get(camera)
+        short = count > MAX_NEW_SEGMENTS
+        frozen = seconds is not None and seconds < MIN_VIDEO_SECONDS
+        print(f"{camera}: {count} new segments in {SAMPLE_SECONDS}s, "
+              + (f"last one {seconds:.2f}s of video" if seconds is not None
+                 else "none probed")
+              + (" -> SHORT SEGMENTS" if short else "")
+              + (" -> FROZEN TIMESTAMPS" if frozen else ""))
+        if short or frozen:
             if DRY_RUN:
                 print(f"{camera}: dry run, would restart record ffmpeg pid {pid}")
             else:
