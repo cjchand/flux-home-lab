@@ -78,7 +78,7 @@ rather than just "is the port open":
 | Nodes Ready | keyword (inverted) on Prometheus | fewer than 3 nodes are Ready |
 | Pods Crash Looping | keyword (inverted) on Prometheus | any container is in `CrashLoopBackOff` |
 | PVC Over 90% | keyword (inverted) on Prometheus | any PVC is more than 90% full |
-| Frigate Camera Ingest Low | keyword (inverted) on Prometheus | the Frigate pod receives under 33 Mbps (30m average; healthy is ~36-39), meaning a camera main stream is stalling and recordings may not play. Reboot the cameras |
+| Frigate Camera Ingest Low | keyword (inverted) on Prometheus | the Frigate pod receives under 28 Mbps (30m average; healthy is ~33-35 since the garage bitrate was lowered on 2026-10-27), meaning a camera main stream is stalling and recordings may not play. Reboot the cameras |
 | Mosquitto Pub/Sub | mqtt | the broker doesn't deliver `$SYS/broker/version` to a fresh subscriber |
 | DNS Internal / External (Pi-hole) | dns | Pi-hole (192.168.86.53) can't resolve `homepage.internal` / `example.com` |
 

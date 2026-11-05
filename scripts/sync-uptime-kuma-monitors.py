@@ -66,13 +66,17 @@ PROM_MONITORS = [
      'sum(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}) > 0', True),
     ("Synthetic - PVC Over 90%",
      "max(kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes) > 0.9", True),
-    # Healthy camera ingest is a steady ~36-39 Mbps. In the 2026-10 incident the
-    # cameras' main streams stalled and it sank to ~20-30 Mbps while recordings
-    # became undecodable (-12909); rebooting the cameras restored it. The 30m
-    # window smooths motion/schedule swings so a brief dip doesn't alert.
+    # Healthy camera ingest was a steady ~36-39 Mbps until the garage camera's
+    # bitrate was lowered on 2026-10-27; since then it's ~33-35 Mbps, and the
+    # old 33 threshold flapped. In the 2026-10 incident the cameras' main
+    # streams stalled and it sank to ~20-30 Mbps while recordings became
+    # undecodable (-12909); rebooting the cameras restored it. A main stream is
+    # ~3.2 Mbps, so 28 means roughly two stalled. A single dead camera is
+    # Frigate Cameras Streaming's job. The 30m window smooths motion/schedule
+    # swings so a brief dip doesn't alert.
     ("Synthetic - Frigate Camera Ingest Low",
      'sum(rate(container_network_receive_bytes_total{namespace="frigate",'
-     'pod=~"frigate-[0-9a-f]+-[a-z0-9]+"}[30m])) * 8 / 1e6 < 33', True),
+     'pod=~"frigate-[0-9a-f]+-[a-z0-9]+"}[30m])) * 8 / 1e6 < 28', True),
 ]
 
 # Frigate's stats endpoint is JSON; jsonata evaluates to true only if no camera
