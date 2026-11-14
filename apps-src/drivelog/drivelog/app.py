@@ -1,5 +1,6 @@
 """FastAPI app: weekly tagging UI + health probe."""
 from datetime import date, timedelta
+from urllib.parse import urlencode
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, Form, Request
@@ -103,5 +104,7 @@ def tag(drive_id: int = Form(...), driver: str = Form(...), week: str = Form("")
     except Exception:
         conn.rollback()
         raise
-    qs = f"week={week}&driver={view_driver}" + (f"&car={car}" if car else "")
-    return RedirectResponse(f"/?{qs}", status_code=303)
+    params = {"week": week, "driver": view_driver}
+    if car:
+        params["car"] = car
+    return RedirectResponse(f"/?{urlencode(params)}", status_code=303)

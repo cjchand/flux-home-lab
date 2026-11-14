@@ -86,7 +86,7 @@
     <div class="card" id="card-days">
       <div class="lab">Days logged (1 h/day cap)</div>
       <div class="big"><span class="val">{{ v.totals.days_logged }}</span> <small>days</small></div>
-      <div class="track"><div class="fill" style="width:{{ (100 * v.totals.days_logged / 7)|round|int }}%;background:var(--good)"></div></div>
+      <div class="track"><div class="fill" style="width:{{ v.days_pct }}%;background:var(--good)"></div></div>
     </div>
   </div>
 
@@ -139,7 +139,7 @@
     {% endfor %}
     </tbody>
   </table>
-  <p class="note">Totals are for this week. &ldquo;Counts&rdquo; applies the Texas 1-hour-per-day cap (night filled first). Checking a drive tags it as {{ v.student_name }}'s; the "me" button marks it as yours.</p>
+  <p class="note">Cards show cumulative totals (all cars, all weeks); this week counted {{ v.week_totals.counted_total_min|dur }}. &ldquo;Counts&rdquo; applies the Texas 1-hour-per-day cap (night filled first). Checking a drive tags it as {{ v.student_name }}'s; the "me" button marks it as yours.</p>
 </div>
 <script src="/static/app.js"></script>
 </body>

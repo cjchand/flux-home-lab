@@ -35,7 +35,8 @@ class WeekView:
     week_start: date
     week_end: date
     days: list[DayView]
-    totals: totals.Totals
+    totals: totals.Totals  # cumulative (lifetime) -- feeds the progress cards
+    week_totals: totals.Totals
     goal_total_min: int
     goal_night_min: int
     student_name: str
@@ -46,6 +47,10 @@ class WeekView:
     @property
     def total_pct(self) -> int:
         return _pct(self.totals.counted_total_min, self.goal_total_min)
+
+    @property
+    def days_pct(self) -> int:
+        return _pct(self.totals.days_logged * 60, self.goal_total_min)
 
     @property
     def night_pct(self) -> int:
@@ -72,7 +77,45 @@ def get_driver_ids(conn) -> dict[str, int | None]:
             ids["student"] = did
         elif name == "me":
             ids["me"] = did
+    missing = {"student", "me"} - ids.keys()
+    if missing:
+        raise LookupError(f"drivelog.drivers is missing seeded driver(s): {sorted(missing)}")
     return ids
+
+
+_LIFETIME_SQL = """
+SELECT d.start_date, d.end_date, sp.latitude::float8, sp.longitude::float8
+FROM drivelog.drive_tags t
+JOIN public.drives d ON d.id = t.teslamate_drive_id
+LEFT JOIN public.positions sp ON sp.id = d.start_position_id
+WHERE t.driver_id = %s AND d.end_date IS NOT NULL
+"""
+
+
+def fetch_student_drives(conn, student_id: int) -> list[tuple]:
+    """All student-tagged drives (all cars, no date window): (start, end, lat, lon)."""
+    with conn.cursor() as cur:
+        cur.execute(_LIFETIME_SQL, (student_id,))
+        rows = cur.fetchall()
+    conn.commit()
+    return rows
+
+
+def _split(start, end, lat, lon, settings):
+    lat = lat if lat is not None else settings.home_lat
+    lon = lon if lon is not None else settings.home_lon
+    return nighttime.split_day_night(start, end, lat, lon, settings.tz)
+
+
+def lifetime_totals(conn, settings: Settings, student_id: int) -> totals.Totals:
+    per_day: dict[date, list[int]] = {}
+    for start, end, lat, lon in fetch_student_drives(conn, student_id):
+        dm, nm = _split(start, end, lat, lon, settings)
+        d = start.replace(tzinfo=timezone.utc).astimezone(settings.tz).date()
+        acc = per_day.setdefault(d, [0, 0])
+        acc[0] += dm
+        acc[1] += nm
+    return totals.summarize([totals.DayMinutes(d, a, b) for d, (a, b) in per_day.items()], CAP_MIN)
 
 
 def week_view(conn, settings: Settings, week_start: date, car_id: int | None,
@@ -94,9 +137,7 @@ def week_view(conn, settings: Settings, week_start: date, car_id: int | None,
 
     by_day: dict[date, DayView] = {}
     for r in rows:
-        lat = r.start_lat if r.start_lat is not None else settings.home_lat
-        lon = r.start_lon if r.start_lon is not None else settings.home_lon
-        day_m, night_m = nighttime.split_day_night(r.start_utc, r.end_utc, lat, lon, tz)
+        day_m, night_m = _split(r.start_utc, r.end_utc, r.start_lat, r.start_lon, settings)
         local_start = r.start_utc.replace(tzinfo=timezone.utc).astimezone(tz)
         dv = DriveView(r, local_start, day_m, night_m, tag_by_id.get(r.driver_id, "none"))
         by_day.setdefault(local_start.date(), DayView(local_start.date())).drives.append(dv)
@@ -112,7 +153,9 @@ def week_view(conn, settings: Settings, week_start: date, car_id: int | None,
             x.counts_min = min(x.total_min, remaining)
             remaining -= x.counts_min
         day_minutes.append(totals.DayMinutes(d.local_date, dm, nm))
-    summary = totals.summarize(day_minutes, CAP_MIN)
+    # Progress cards are cumulative over all cars/weeks; the table stays week-scoped.
+    summary = lifetime_totals(conn, settings, ids["student"])
+    week_summary = totals.summarize(day_minutes, CAP_MIN)
 
     days = sorted(by_day.values(), key=lambda d: d.local_date, reverse=True)
     if driver_filter in ("student", "me", "none"):
@@ -122,7 +165,7 @@ def week_view(conn, settings: Settings, week_start: date, car_id: int | None,
 
     return WeekView(
         week_start=week_start, week_end=week_start + timedelta(days=6), days=days,
-        totals=summary, goal_total_min=round(settings.goal_total_h * 60),
+        totals=summary, week_totals=week_summary, goal_total_min=round(settings.goal_total_h * 60),
         goal_night_min=round(settings.goal_night_h * 60), student_name=settings.student_name,
         cars=cars, driver_filter=driver_filter, car_id=car_id,
     )
