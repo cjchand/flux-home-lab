@@ -1,0 +1,128 @@
+"""Glue: fetch drives -> day/night split -> tags -> capped totals."""
+from dataclasses import dataclass, field
+from datetime import date, datetime, time, timedelta, timezone
+
+from drivelog import db, nighttime, totals
+from drivelog.config import Settings
+
+CAP_MIN = 60
+
+
+@dataclass
+class DriveView:
+    row: db.DriveRow
+    local_start: datetime
+    day_min: int
+    night_min: int
+    tag: str  # "student" | "me" | "none"
+    counts_min: int = 0  # minutes this drive contributes after the daily cap
+
+    @property
+    def total_min(self) -> int:
+        return self.day_min + self.night_min
+
+
+@dataclass
+class DayView:
+    local_date: date
+    drives: list[DriveView] = field(default_factory=list)
+    counted_min: int = 0
+    raw_min: int = 0  # student-tagged minutes before the cap
+
+
+@dataclass
+class WeekView:
+    week_start: date
+    week_end: date
+    days: list[DayView]
+    totals: totals.Totals
+    goal_total_min: int
+    goal_night_min: int
+    student_name: str
+    cars: list[tuple[int, str]]
+    driver_filter: str
+    car_id: int | None
+
+    @property
+    def total_pct(self) -> int:
+        return _pct(self.totals.counted_total_min, self.goal_total_min)
+
+    @property
+    def night_pct(self) -> int:
+        return _pct(self.totals.counted_night_min, self.goal_night_min)
+
+
+def _pct(v: int, goal: int) -> int:
+    return min(100, round(100 * v / goal)) if goal else 0
+
+
+def week_sunday(d: date) -> date:
+    return d - timedelta(days=(d.weekday() + 1) % 7)
+
+
+def get_driver_ids(conn) -> dict[str, int | None]:
+    """Map UI choices to seeded driver ids: student -> is_student row, me -> 'me'."""
+    with conn.cursor() as cur:
+        cur.execute("SELECT id, name, is_student FROM drivelog.drivers")
+        rows = cur.fetchall()
+    conn.commit()
+    ids: dict[str, int | None] = {"none": None}
+    for did, name, is_student in rows:
+        if is_student:
+            ids["student"] = did
+        elif name == "me":
+            ids["me"] = did
+    return ids
+
+
+def week_view(conn, settings: Settings, week_start: date, car_id: int | None,
+              driver_filter: str = "all") -> WeekView:
+    tz = settings.tz
+    start_local = datetime.combine(week_start, time.min, tzinfo=tz)
+    end_local = datetime.combine(week_start + timedelta(days=7), time.min, tzinfo=tz)
+    start_utc = start_local.astimezone(timezone.utc).replace(tzinfo=None)
+    end_utc = end_local.astimezone(timezone.utc).replace(tzinfo=None)
+
+    try:
+        rows = db.fetch_drives(conn, start_utc, end_utc, car_id)
+        ids = get_driver_ids(conn)
+        cars = db.list_cars(conn)
+    except Exception:
+        conn.rollback()
+        raise
+    tag_by_id = {v: k for k, v in ids.items() if v is not None}
+
+    by_day: dict[date, DayView] = {}
+    for r in rows:
+        lat = r.start_lat if r.start_lat is not None else settings.home_lat
+        lon = r.start_lon if r.start_lon is not None else settings.home_lon
+        day_m, night_m = nighttime.split_day_night(r.start_utc, r.end_utc, lat, lon, tz)
+        local_start = r.start_utc.replace(tzinfo=timezone.utc).astimezone(tz)
+        dv = DriveView(r, local_start, day_m, night_m, tag_by_id.get(r.driver_id, "none"))
+        by_day.setdefault(local_start.date(), DayView(local_start.date())).drives.append(dv)
+
+    day_minutes = []
+    for d in by_day.values():
+        mine = [x for x in d.drives if x.tag == "student"]
+        dm, nm = sum(x.day_min for x in mine), sum(x.night_min for x in mine)
+        cd, cn = totals.cap_one_day(dm, nm, CAP_MIN)
+        d.counted_min, d.raw_min = cd + cn, dm + nm
+        remaining = d.counted_min
+        for x in mine:  # allocate the capped minutes chronologically
+            x.counts_min = min(x.total_min, remaining)
+            remaining -= x.counts_min
+        day_minutes.append(totals.DayMinutes(d.local_date, dm, nm))
+    summary = totals.summarize(day_minutes, CAP_MIN)
+
+    days = sorted(by_day.values(), key=lambda d: d.local_date, reverse=True)
+    if driver_filter in ("student", "me", "none"):
+        for d in days:
+            d.drives = [x for x in d.drives if x.tag == driver_filter]
+        days = [d for d in days if d.drives]
+
+    return WeekView(
+        week_start=week_start, week_end=week_start + timedelta(days=6), days=days,
+        totals=summary, goal_total_min=round(settings.goal_total_h * 60),
+        goal_night_min=round(settings.goal_night_h * 60), student_name=settings.student_name,
+        cars=cars, driver_filter=driver_filter, car_id=car_id,
+    )

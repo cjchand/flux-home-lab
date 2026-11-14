@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Drive Log</title>
+<style>
+  :root{--bg:#0f1420;--panel:#171e2e;--panel2:#1e2740;--line:#2a3550;--ink:#e8edf7;--mut:#93a0bd;--accent:#4f9cff;--day:#f0b34a;--night:#8b7cf0;--good:#3ec28f}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,Segoe UI,Roboto,sans-serif}
+  .wrap{max-width:960px;margin:0 auto;padding:22px}
+  h1{font-size:19px;margin:0 0 2px}
+  .sub{color:var(--mut);font-size:13px;margin:0 0 18px}
+  .bar{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:16px;flex-wrap:wrap}
+  .bar .who{font-weight:600}
+  .bar select,.btn{background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:6px 10px;font-size:13px;cursor:pointer;text-decoration:none}
+  .nav{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .nav .rng{min-width:150px;text-align:center;font-weight:600}
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .card .lab{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+  .card .big{font-size:26px;font-weight:700;margin-top:4px}
+  .card .big small{font-size:14px;color:var(--mut);font-weight:500}
+  .track{height:7px;background:var(--panel2);border-radius:99px;margin-top:10px;overflow:hidden}
+  .fill{height:100%;border-radius:99px}
+  table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th,td{padding:10px 12px;text-align:left;font-size:13.5px;border-bottom:1px solid var(--line)}
+  th{color:var(--mut);font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;background:var(--panel2)}
+  tr.on{background:rgba(79,156,255,.07)}
+  .pill{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11.5px;font-weight:600}
+  .pd{background:rgba(240,179,74,.15);color:var(--day)}
+  .pn{background:rgba(139,124,240,.18);color:var(--night)}
+  .count{font-weight:700}
+  .capped{color:var(--mut);text-decoration:line-through;font-weight:400;margin-left:6px;font-size:12px}
+  .muted{color:var(--mut)}
+  .daygrp td{background:#121a2b;color:var(--mut);font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;font-weight:600;padding:6px 12px}
+  form.tagform{margin:0;display:flex;gap:6px;align-items:center}
+  form.tagform input[type=checkbox]{width:18px;height:18px;cursor:pointer}
+  .me{font-size:11px;padding:2px 7px}
+  .me.active{background:var(--night);color:#fff}
+  .note{color:var(--mut);font-size:12.5px;margin-top:16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Behind-the-Wheel Drive Log</h1>
+  <p class="sub">Tag which drives {{ v.student_name }} drove, then copy the totals onto the paper log.</p>
+
+  <form class="bar" method="get" action="/">
+    <input type="hidden" name="week" value="{{ v.week_start }}">
+    <span class="who">Driver:</span>
+    <select name="driver" onchange="this.form.submit()">
+      <option value="all" {{ "selected" if driver == "all" }}>All</option>
+      <option value="student" {{ "selected" if driver == "student" }}>{{ v.student_name }} (practice)</option>
+      <option value="me" {{ "selected" if driver == "me" }}>Me</option>
+      <option value="none" {{ "selected" if driver == "none" }}>Untagged</option>
+    </select>
+    {% if v.cars|length > 1 %}
+    <select name="car" onchange="this.form.submit()">
+      <option value="">All cars</option>
+      {% for cid, cname in v.cars %}<option value="{{ cid }}" {{ "selected" if car == cid }}>{{ cname }}</option>{% endfor %}
+    </select>
+    {% endif %}
+    <div class="nav">
+      {% set q = "&driver=" ~ driver ~ ("&car=" ~ car if car else "") %}
+      <a class="btn" href="/?week={{ prev_week }}{{ q }}">&larr;</a>
+      <span class="rng">{{ v.week_start.strftime("%b %-d") }} &ndash; {{ v.week_end.strftime("%b %-d, %Y") }}</span>
+      <a class="btn" href="/?week={{ next_week }}{{ q }}">&rarr;</a>
+      <a class="btn" href="/?week={{ this_week }}{{ q }}">This week</a>
+    </div>
+  </form>
+
+  {% set gt = (v.goal_total_min / 60)|round|int %}
+  {% set gn = (v.goal_night_min / 60)|round|int %}
+  <div class="cards">
+    <div class="card" id="card-total">
+      <div class="lab">Total toward {{ gt }} h</div>
+      <div class="big"><span class="val">{{ v.totals.counted_total_min|hours }}</span> <small>/ {{ gt }} h</small></div>
+      <div class="track"><div class="fill" style="width:{{ v.total_pct }}%;background:var(--accent)"></div></div>
+    </div>
+    <div class="card" id="card-night">
+      <div class="lab">Night toward {{ gn }} h</div>
+      <div class="big"><span class="val">{{ v.totals.counted_night_min|hours }}</span> <small>/ {{ gn }} h</small></div>
+      <div class="track"><div class="fill" style="width:{{ v.night_pct }}%;background:var(--night)"></div></div>
+    </div>
+    <div class="card" id="card-days">
+      <div class="lab">Days logged (1 h/day cap)</div>
+      <div class="big"><span class="val">{{ v.totals.days_logged }}</span> <small>days</small></div>
+      <div class="track"><div class="fill" style="width:{{ (100 * v.totals.days_logged / 7)|round|int }}%;background:var(--good)"></div></div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th style="width:60px">Tag</th><th>Date</th><th>Start</th><th>Duration</th><th>Day / Night</th><th>Counts</th><th>Route</th></tr>
+    </thead>
+    <tbody>
+    {% for d in v.days %}
+      <tr class="daygrp"><td colspan="7">{{ d.local_date.strftime("%a · %b %-d") }}
+        {%- if d.counted_min %} — {{ d.counted_min|dur }} counted{% if d.raw_min != d.counted_min %} (drove {{ d.raw_min|dur }}){% endif %}{% endif %}</td></tr>
+      {% for x in d.drives %}
+      <tr class="{{ 'on' if x.tag == 'student' }}" data-drive="{{ x.row.id }}">
+        <td>
+          <form class="tagform" method="post" action="/tag">
+            <input type="hidden" name="drive_id" value="{{ x.row.id }}">
+            <input type="hidden" name="driver" value="{{ 'none' if x.tag == 'student' else 'student' }}">
+            <input type="hidden" name="week" value="{{ v.week_start }}">
+            <input type="hidden" name="car" value="{{ car if car else '' }}">
+            <input type="hidden" name="view_driver" value="{{ driver }}">
+            <input type="checkbox" title="{{ v.student_name }} drove" {{ "checked" if x.tag == "student" }}>
+            <noscript><button class="btn me">save</button></noscript>
+          </form>
+        </td>
+        <td>{{ x.local_start.strftime("%b %-d") }}</td>
+        <td>{{ x.local_start.strftime("%-I:%M %p") }}</td>
+        <td>{{ x.total_min|dur }}{% if x.row.car_name %}<div class="muted" style="font-size:12px">{{ x.row.car_name }}</div>{% endif %}</td>
+        <td>
+          {% if x.day_min %}<span class="pill pd">{{ x.day_min|dur }} day</span>{% endif %}
+          {% if x.night_min %}<span class="pill pn">{{ x.night_min|dur }} night</span>{% endif %}
+        </td>
+        <td>
+          {% if x.tag == "student" %}<span class="count">{{ x.counts_min|dur }}</span>{% if x.counts_min != x.total_min %}<span class="capped">{{ x.total_min|dur }}</span>{% endif %}
+          {% elif x.tag == "me" %}<span class="muted">me</span>
+          {% else %}<span class="muted">&mdash;</span>{% endif %}
+          <form class="tagform" method="post" action="/tag" style="display:inline-flex">
+            <input type="hidden" name="drive_id" value="{{ x.row.id }}">
+            <input type="hidden" name="driver" value="{{ 'none' if x.tag == 'me' else 'me' }}">
+            <input type="hidden" name="week" value="{{ v.week_start }}">
+            <input type="hidden" name="car" value="{{ car if car else '' }}">
+            <input type="hidden" name="view_driver" value="{{ driver }}">
+            <button class="btn me {{ 'active' if x.tag == 'me' }}" title="Mark as driven by me">me</button>
+          </form>
+        </td>
+        <td class="muted">{{ x.row.start_label }} &rarr; {{ x.row.end_label }}</td>
+      </tr>
+      {% endfor %}
+    {% else %}
+      <tr><td colspan="7" class="muted">No drives for this selection.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p class="note">Totals are for this week. &ldquo;Counts&rdquo; applies the Texas 1-hour-per-day cap (night filled first). Checking a drive tags it as {{ v.student_name }}'s; the "me" button marks it as yours.</p>
+</div>
+<script src="/static/app.js"></script>
+</body>
+</html>
