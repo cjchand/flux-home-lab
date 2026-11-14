@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: drivelog
+  namespace: teslamate
+  labels:
+    app: drivelog
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: drivelog
+  template:
+    metadata:
+      labels:
+        app: drivelog
+    spec:
+      containers:
+        - name: drivelog
+          image: ghcr.io/cjchand/drivelog:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: DRIVELOG_DB_HOST
+              value: teslamate-postgres-nfs-postgresql
+            - name: DRIVELOG_DB_PORT
+              value: "5432"
+            - name: DRIVELOG_DB_NAME
+              value: teslamate
+            - name: DRIVELOG_DB_USER
+              value: teslamate
+            - name: DRIVELOG_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: teslamate-postgres
+                  key: teslamate_user_pass
+            - name: DRIVELOG_TZ
+              value: America/Chicago
+            - name: DRIVELOG_STUDENT_NAME
+              value: Toby
+            - name: DRIVELOG_GOAL_TOTAL_H
+              value: "30"
+            - name: DRIVELOG_GOAL_NIGHT_H
+              value: "10"
+            # TODO: PLACEHOLDER coordinates (Austin, TX). Replace with your
+            # actual home latitude/longitude. Only used as a rare fallback
+            # when a drive has NULL GPS data.
+            - name: DRIVELOG_HOME_LAT
+              value: "30.2672"
+            - name: DRIVELOG_HOME_LON
+              value: "-97.7431"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
