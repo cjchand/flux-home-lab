@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from drivelog.nighttime import night_edges, split_day_night
@@ -14,6 +14,8 @@ def local(y, m, d, hh, mm):
 def test_night_edges_order_and_tz():
     dusk, dawn = night_edges(date(2026, 6, 15), LAT, LON, TZ)
     assert dusk.tzinfo is not None and dawn.tzinfo is not None
+    assert dawn < dusk
+    assert dawn.date() == dusk.date() == date(2026, 6, 15)
     assert dawn.hour in (5, 6) and dusk.hour in (20, 21)
 
 
@@ -27,8 +29,8 @@ def test_all_nighttime_drive():
 
 def test_crosses_dusk():
     dusk, _ = night_edges(date(2026, 6, 15), LAT, LON, TZ)
-    start = dusk.replace(second=0, microsecond=0) - __import__("datetime").timedelta(minutes=20)
-    end = start + __import__("datetime").timedelta(minutes=60)
+    start = dusk.replace(second=0, microsecond=0) - timedelta(minutes=20)
+    end = start + timedelta(minutes=60)
     day, night = split_day_night(start, end, LAT, LON, TZ)
     assert day + night == 60
     assert night > 0 and day > 0
@@ -44,7 +46,7 @@ def test_naive_input_treated_as_utc():
     assert split_day_night(datetime(2026, 6, 15, 18, 0), datetime(2026, 6, 15, 18, 40), LAT, LON, TZ) == (40, 0)
 
 
-def test_null_gps_uses_home_fallback():
+def test_arbitrary_coords_work():
     # Fallback to home coords happens in the DB layer; here any coords work.
     day, night = split_day_night(local(2026, 6, 15, 13, 0), local(2026, 6, 15, 13, 30), 45.0, -100.0, TZ)
     assert (day, night) == (30, 0)
