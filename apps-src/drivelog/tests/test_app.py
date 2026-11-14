@@ -121,3 +121,20 @@ def test_redirect_is_urlencoded(client):
     r = client.post("/tag", data={"drive_id": "1", "driver": "me", "week": "2026-11-08",
                                   "car": "1&x=2", "view_driver": "all"})
     assert "car=1%262" in r.headers["location"] or "car=1%26x%3D2" in r.headers["location"]
+
+
+def test_midnight_spanning_drive_counts_on_both_dates(monkeypatch):
+    from datetime import date
+    # 11:00pm -> 12:30am CST (UTC-6) Nov 12/13, 90 min all night, one student drive
+    d = drive(4, datetime(2026, 11, 13, 5, 0), datetime(2026, 11, 13, 6, 30), driver_id=7)
+    monkeypatch.setattr(db, "fetch_drives", lambda c, s, e, car: [d])
+    monkeypatch.setattr(db, "list_cars", lambda c: [])
+    monkeypatch.setattr(service, "fetch_student_drives",
+                        lambda c, sid: [(d.start_utc, d.end_utc, 30.27, -97.74)])
+    monkeypatch.setattr(service, "get_driver_ids", lambda c: {"none": None, "student": 7, "me": 8})
+    assert service._day_pieces(d.start_utc, d.end_utc, 30.27, -97.74, SETTINGS) == [
+        (date(2026, 11, 12), 0, 60), (date(2026, 11, 13), 0, 30)]
+    v = service.week_view(FakeConn(), SETTINGS, date(2026, 11, 8), None)
+    assert v.totals.counted_total_min == 90  # 60 + 30, not capped to 60
+    assert v.totals.days_logged == 2
+    assert v.week_totals.counted_total_min == 90

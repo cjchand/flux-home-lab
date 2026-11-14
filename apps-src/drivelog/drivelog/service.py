@@ -107,15 +107,39 @@ def _split(start, end, lat, lon, settings):
     return nighttime.split_day_night(start, end, lat, lon, settings.tz)
 
 
-def lifetime_totals(conn, settings: Settings, student_id: int) -> totals.Totals:
-    per_day: dict[date, list[int]] = {}
-    for start, end, lat, lon in fetch_student_drives(conn, student_id):
-        dm, nm = _split(start, end, lat, lon, settings)
-        d = start.replace(tzinfo=timezone.utc).astimezone(settings.tz).date()
-        acc = per_day.setdefault(d, [0, 0])
+def _day_pieces(start, end, lat, lon, settings) -> list[tuple[date, int, int]]:
+    """Split a drive at local midnights: [(local_date, day_min, night_min), ...]."""
+    tz = settings.tz
+    s_utc = start.replace(tzinfo=timezone.utc) if start.tzinfo is None else start
+    e_utc = end.replace(tzinfo=timezone.utc) if end.tzinfo is None else end
+    out = []
+    cur = s_utc
+    while cur < e_utc:
+        local = cur.astimezone(tz)
+        midnight = datetime.combine(local.date() + timedelta(days=1), time.min, tzinfo=tz)
+        piece_end = min(e_utc, midnight.astimezone(timezone.utc))
+        dm, nm = _split(cur, piece_end, lat, lon, settings)
+        out.append((local.date(), dm, nm))
+        cur = piece_end
+    return out or [(s_utc.astimezone(tz).date(), 0, 0)]
+
+
+def _add(buckets: dict[date, list[int]], pieces) -> None:
+    for d, dm, nm in pieces:
+        acc = buckets.setdefault(d, [0, 0])
         acc[0] += dm
         acc[1] += nm
-    return totals.summarize([totals.DayMinutes(d, a, b) for d, (a, b) in per_day.items()], CAP_MIN)
+
+
+def _summarize(buckets: dict[date, list[int]]) -> totals.Totals:
+    return totals.summarize([totals.DayMinutes(d, a, b) for d, (a, b) in buckets.items()], CAP_MIN)
+
+
+def lifetime_totals(conn, settings: Settings, student_id: int) -> totals.Totals:
+    buckets: dict[date, list[int]] = {}
+    for start, end, lat, lon in fetch_student_drives(conn, student_id):
+        _add(buckets, _day_pieces(start, end, lat, lon, settings))
+    return _summarize(buckets)
 
 
 def week_view(conn, settings: Settings, week_start: date, car_id: int | None,
@@ -136,26 +160,30 @@ def week_view(conn, settings: Settings, week_start: date, car_id: int | None,
     tag_by_id = {v: k for k, v in ids.items() if v is not None}
 
     by_day: dict[date, DayView] = {}
+    buckets: dict[date, list[int]] = {}
+    first_min: dict[int, int] = {}  # drive id -> minutes falling on its start date
     for r in rows:
         day_m, night_m = _split(r.start_utc, r.end_utc, r.start_lat, r.start_lon, settings)
         local_start = r.start_utc.replace(tzinfo=timezone.utc).astimezone(tz)
         dv = DriveView(r, local_start, day_m, night_m, tag_by_id.get(r.driver_id, "none"))
         by_day.setdefault(local_start.date(), DayView(local_start.date())).drives.append(dv)
+        if dv.tag == "student":
+            pieces = _day_pieces(r.start_utc, r.end_utc, r.start_lat, r.start_lon, settings)
+            _add(buckets, pieces)
+            first_min[r.id] = pieces[0][1] + pieces[0][2]
 
-    day_minutes = []
     for d in by_day.values():
-        mine = [x for x in d.drives if x.tag == "student"]
-        dm, nm = sum(x.day_min for x in mine), sum(x.night_min for x in mine)
+        dm, nm = buckets.get(d.local_date, (0, 0))
         cd, cn = totals.cap_one_day(dm, nm, CAP_MIN)
         d.counted_min, d.raw_min = cd + cn, dm + nm
         remaining = d.counted_min
-        for x in mine:  # allocate the capped minutes chronologically
-            x.counts_min = min(x.total_min, remaining)
-            remaining -= x.counts_min
-        day_minutes.append(totals.DayMinutes(d.local_date, dm, nm))
+        for x in d.drives:  # allocate the capped minutes chronologically
+            if x.tag == "student":
+                x.counts_min = min(first_min[x.row.id], remaining)
+                remaining -= x.counts_min
     # Progress cards are cumulative over all cars/weeks; the table stays week-scoped.
     summary = lifetime_totals(conn, settings, ids["student"])
-    week_summary = totals.summarize(day_minutes, CAP_MIN)
+    week_summary = _summarize(buckets)
 
     days = sorted(by_day.values(), key=lambda d: d.local_date, reverse=True)
     if driver_filter in ("student", "me", "none"):
