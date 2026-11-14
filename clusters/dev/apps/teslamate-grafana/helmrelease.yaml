@@ -53,7 +53,7 @@ spec:
         cpu: 100m
         memory: 512Mi
     env:
-      DATABASE_HOST: teslamate-postgres-nfs-postgresql
+      DATABASE_HOST: teslamate-pg-rw
       DATABASE_PORT: 5432
       DATABASE_USER: teslamate
       DATABASE_NAME: teslamate
