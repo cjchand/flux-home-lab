@@ -10,6 +10,7 @@ resources:
   - pvc-frigate-recordings.yaml
   - deployment-frigate.yaml
   - service-frigate.yaml
+  - servicemonitor-frigate.yaml
   - ingress-frigate.yaml
   - configmap-overnight-summary.yaml
   - cronjob-overnight-summary.yaml

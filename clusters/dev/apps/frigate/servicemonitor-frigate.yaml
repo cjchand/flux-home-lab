@@ -1,0 +1,19 @@
+# Scrapes Frigate's built-in Prometheus endpoint: per-process CPU, per-camera
+# fps / detection fps / skipped fps, and detector inference speed. The container
+# CPU metrics alone can't show which part of Frigate is using the CPU.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: frigate
+  namespace: frigate
+  labels:
+    # kube-prometheus-stack only picks up monitors with this label
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: frigate
+  endpoints:
+    - port: api
+      path: /api/metrics
+      interval: 60s
