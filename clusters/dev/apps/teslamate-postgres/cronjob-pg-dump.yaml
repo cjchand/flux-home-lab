@@ -1,0 +1,61 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: teslamate-pg-dump
+  namespace: teslamate
+spec:
+  schedule: "30 3 * * *"
+  timeZone: "America/Chicago"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          securityContext:
+            # Matches the owner of the dumps already on teslamate-backup-pvc.
+            runAsUser: 1001
+            runAsGroup: 1001
+          containers:
+            - name: dump
+              # Same image as the teslamate-pg Cluster, so pg_dump matches the server.
+              image: ghcr.io/cloudnative-pg/postgresql:17.12-standard-bookworm
+              command: ["/bin/bash", "-c"]
+              args:
+                - |
+                  set -euo pipefail
+                  cd /backup
+                  name="teslamate-$(TZ=America/Chicago date +%F).dump"
+                  pg_dump -Fc -h teslamate-pg-rw -U "$PGUSER" -d teslamate -f "$name.tmp"
+                  pg_restore --list "$name.tmp" > /dev/null
+                  mv "$name.tmp" "$name"
+                  ls -l "$name"
+                  # Keep the newest 7 nightlies; pre-cnpg-*.dump never matches.
+                  ls -1 teslamate-2*.dump | sort | head -n -7 | xargs -r rm -v
+              env:
+                - name: PGUSER
+                  valueFrom:
+                    secretKeyRef:
+                      name: teslamate-pg-superuser
+                      key: username
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: teslamate-pg-superuser
+                      key: password
+              volumeMounts:
+                - name: backup
+                  mountPath: /backup
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+                limits:
+                  memory: 512Mi
+          volumes:
+            - name: backup
+              persistentVolumeClaim:
+                claimName: teslamate-backup-pvc

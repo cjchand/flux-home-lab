@@ -8,3 +8,4 @@ resources:
   - teslamate-postgres-sealed.yaml
   - cnpg-secrets-sealed.yaml
   - cnpg-cluster.yaml
+  - cronjob-pg-dump.yaml
