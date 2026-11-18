@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: drivelog
+  namespace: teslamate
+  labels:
+    app: drivelog
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: drivelog
+  template:
+    metadata:
+      labels:
+        app: drivelog
+    spec:
+      containers:
+        - name: drivelog
+          image: ghcr.io/cjchand/drivelog:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            # Teslamate's database now lives in the CNPG cluster (teslamate-pg).
+            # Connect as the DB owner role "teslamate" (non-superuser, has CREATE
+            # on the DB so it can create the drivelog schema), using the
+            # CNPG-managed app secret.
+            - name: DRIVELOG_DB_HOST
+              value: teslamate-pg-rw
+            - name: DRIVELOG_DB_PORT
+              value: "5432"
+            - name: DRIVELOG_DB_NAME
+              value: teslamate
+            - name: DRIVELOG_DB_USER
+              value: teslamate
+            - name: DRIVELOG_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: teslamate-pg-app
+                  key: password
+            - name: DRIVELOG_TZ
+              value: America/Chicago
+            - name: DRIVELOG_STUDENT_NAME
+              value: Toby
+            - name: DRIVELOG_GOAL_TOTAL_H
+              value: "30"
+            - name: DRIVELOG_GOAL_NIGHT_H
+              value: "10"
+            # Home-area coordinates (Allen, TX / ZIP 75013 centroid). Only used
+            # as a fallback for the day/night calc when a drive has NULL GPS
+            # data; approximate location is sufficient for sunrise/sunset.
+            - name: DRIVELOG_HOME_LAT
+              value: "33.1186"
+            - name: DRIVELOG_HOME_LON
+              value: "-96.6773"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
