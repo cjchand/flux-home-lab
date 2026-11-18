@@ -23,8 +23,12 @@ spec:
             - name: http
               containerPort: 8080
           env:
+            # Teslamate's database now lives in the CNPG cluster (teslamate-pg).
+            # Connect as the DB owner role "teslamate" (non-superuser, has CREATE
+            # on the DB so it can create the drivelog schema), using the
+            # CNPG-managed app secret.
             - name: DRIVELOG_DB_HOST
-              value: teslamate-postgres-nfs-postgresql
+              value: teslamate-pg-rw
             - name: DRIVELOG_DB_PORT
               value: "5432"
             - name: DRIVELOG_DB_NAME
@@ -34,8 +38,8 @@ spec:
             - name: DRIVELOG_DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: teslamate-postgres
-                  key: teslamate_user_pass
+                  name: teslamate-pg-app
+                  key: password
             - name: DRIVELOG_TZ
               value: America/Chicago
             - name: DRIVELOG_STUDENT_NAME
@@ -44,13 +48,13 @@ spec:
               value: "30"
             - name: DRIVELOG_GOAL_NIGHT_H
               value: "10"
-            # TODO: PLACEHOLDER coordinates (Austin, TX). Replace with your
-            # actual home latitude/longitude. Only used as a rare fallback
-            # when a drive has NULL GPS data.
+            # Home-area coordinates (Allen, TX / ZIP 75013 centroid). Only used
+            # as a fallback for the day/night calc when a drive has NULL GPS
+            # data; approximate location is sufficient for sunrise/sunset.
             - name: DRIVELOG_HOME_LAT
-              value: "30.2672"
+              value: "33.1186"
             - name: DRIVELOG_HOME_LON
-              value: "-97.7431"
+              value: "-96.6773"
           readinessProbe:
             httpGet:
               path: /healthz
