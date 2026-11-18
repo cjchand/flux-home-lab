@@ -56,7 +56,7 @@ spec:
       - name: TZ 
         value: UTC
       - name: DATABASE_HOST
-        value: teslamate-postgres-nfs-postgresql
+        value: teslamate-pg-rw
       - name: DATABASE_PORT
         value: 5432
       - name: DATABASE_USER

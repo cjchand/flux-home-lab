@@ -1,0 +1,49 @@
+---
+# Replacement for the Bitnami teslamate-postgres-nfs release. On first creation
+# it imports the teslamate database from the old server (externalClusters
+# below); after that the bootstrap section is ignored. The Bitnami release stays
+# up, untouched, as the rollback until it is retired by hand.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: teslamate-pg
+  namespace: teslamate
+spec:
+  instances: 1
+  # The standard images carry en_US.UTF-8, which the source database uses.
+  imageName: ghcr.io/cloudnative-pg/postgresql:17.12-standard-bookworm
+  storage:
+    size: 20Gi
+    storageClass: nfs-client
+  enableSuperuserAccess: true
+  superuserSecret:
+    name: teslamate-pg-superuser
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+  bootstrap:
+    initdb:
+      database: teslamate
+      owner: teslamate
+      secret:
+        name: teslamate-pg-app
+      encoding: UTF8
+      localeCollate: en_US.UTF-8
+      localeCType: en_US.UTF-8
+      import:
+        type: microservice
+        databases:
+          - teslamate
+        source:
+          externalCluster: bitnami-teslamate
+  externalClusters:
+    - name: bitnami-teslamate
+      connectionParameters:
+        host: teslamate-postgres-nfs-postgresql.teslamate.svc.cluster.local
+        user: postgres
+        dbname: teslamate
+        sslmode: disable
+      password:
+        name: teslamate-postgres
+        key: postgres_user_pass
