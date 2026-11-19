@@ -77,6 +77,32 @@ def test_tag_persists_and_redirects(client):
     assert client.calls[-1] == (2, None)
 
 
+def test_driver_control_replaces_counts_me_button(client):
+    r = client.get("/?week=2026-11-08")
+    assert r.status_code == 200
+    # the old stray "me" toggle that used to live in the Counts column is gone
+    assert "Mark as driven by me" not in r.text
+    # each drive now carries a single 3-state driver control
+    d1 = r.text.split('data-drive="1"')[1].split("</tr>")[0]
+    assert 'name="driver" value="student"' in d1
+    assert 'name="driver" value="me"' in d1
+    assert 'name="driver" value="none"' in d1
+    # D1 is student-tagged -> the Toby segment is the active one
+    assert 'value="student" class="seg active"' in d1
+    # untagged D2 -> the "none" segment is active
+    d2 = r.text.split('data-drive="2"')[1].split("</tr>")[0]
+    assert 'value="none" class="seg active"' in d2
+
+
+def test_counts_column_is_minutes_only(client):
+    r = client.get("/?week=2026-11-08")
+    d1 = r.text.split('data-drive="1"')[1].split("</tr>")[0]
+    counts = d1.split("</td>")[5]  # 6th cell: Driver,Date,Start,Duration,Day/Night,Counts
+    # student drive shows capped minutes, and the Counts cell has no tag button
+    assert '<span class="count">1 h</span>' in d1
+    assert "<button" not in counts
+
+
 def test_untagged_filter(client):
     r = client.get("/?week=2026-11-08&driver=none")
     assert 'data-drive="2"' in r.text and 'data-drive="1"' not in r.text
