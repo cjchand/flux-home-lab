@@ -1,0 +1,61 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: tandoor-pg-dump
+  namespace: tandoor
+spec:
+  schedule: "45 3 * * *"
+  timeZone: "America/Chicago"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          securityContext:
+            # Runs as a fixed non-root uid so dumps are owned consistently.
+            runAsUser: 65534
+            runAsGroup: 65534
+          containers:
+            - name: dump
+              # Same image as the tandoor-pg Cluster, so pg_dump matches the server.
+              image: ghcr.io/cloudnative-pg/postgresql:17.12-standard-bookworm
+              command: ["/bin/bash", "-c"]
+              args:
+                - |
+                  set -euo pipefail
+                  cd /backup
+                  name="tandoor-$(TZ=America/Chicago date +%F).dump"
+                  pg_dump -Fc -h tandoor-pg-rw -U "$PGUSER" -d tandoor -f "$name.tmp"
+                  pg_restore --list "$name.tmp" > /dev/null
+                  mv "$name.tmp" "$name"
+                  ls -l "$name"
+                  # Keep the newest 7 nightlies; a pre-cnpg-*.dump never matches.
+                  ls -1 tandoor-2*.dump | sort | head -n -7 | xargs -r rm -v
+              env:
+                - name: PGUSER
+                  valueFrom:
+                    secretKeyRef:
+                      name: tandoor-pg-superuser
+                      key: username
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: tandoor-pg-superuser
+                      key: password
+              volumeMounts:
+                - name: backup
+                  mountPath: /backup
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+                limits:
+                  memory: 512Mi
+          volumes:
+            - name: backup
+              persistentVolumeClaim:
+                claimName: tandoor-backup-pvc

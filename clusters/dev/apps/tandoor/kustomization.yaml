@@ -4,7 +4,8 @@ kind: Kustomization
 resources:
   - source-helmrepo-gabe565.yaml
   - helmrelease.yaml
-  - tandoor-postgres-sealedsecret.yaml
   - tandoor-pg-app-sealed.yaml
   - tandoor-pg-superuser-sealed.yaml
   - cnpg-cluster.yaml
+  - backup-pvc.yaml
+  - cronjob-pg-dump.yaml

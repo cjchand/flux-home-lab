@@ -37,6 +37,17 @@ spec:
       # -- default timezone
       TIMEZONE: UTC
       SOCIAL_PROVIDERS: 
+      # The app talks to the CNPG cluster tandoor-pg. These override the values
+      # the chart derives from the (still enabled) Bitnami subchart below.
+      POSTGRES_HOST: tandoor-pg-rw
+      POSTGRES_USER:
+        secretKeyRef:
+          name: tandoor-pg-app
+          key: username
+      POSTGRES_PASSWORD:
+        secretKeyRef:
+          name: tandoor-pg-app
+          key: password
       # SECRET_KEY: changeme
 
     resources:
@@ -113,18 +124,11 @@ spec:
     # @default -- See [values.yaml](./values.yaml)
     postgresql:
       enabled: true
-      # Bitnami retired its public Docker Hub catalogue and the tag this subchart
-      # defaults to, 16.2.0-debian-11-r1, now 404s on docker.io/bitnami. It kept
-      # running here only from each node's local image cache; the microk8s 1.33
-      # upgrade drained the node, the pod was rescheduled, the pull failed and
-      # the database has been in ImagePullBackOff since -- which is what made
-      # recipes.internal return 503.
-      #
-      # bitnamilegacy is Bitnami's archive of the withdrawn images and still
-      # serves this exact tag. It is a stopgap, not a home: nothing there is
-      # maintained or patched. The real fix is moving off these images, and the
-      # cloudnative-pg operator already running in cluster-services is the
-      # obvious destination.
+      # No longer used by the app: it moved to the CNPG cluster tandoor-pg (see
+      # cnpg-cluster.yaml). This subchart is kept running, on the unmaintained
+      # bitnamilegacy image (Bitnami withdrew the original tag), only as the
+      # rollback. Retire it by hand, with an explicit OK, then remove this whole
+      # block plus bootstrap.initdb.import / externalClusters in cnpg-cluster.yaml.
       image:
         repository: bitnamilegacy/postgresql
         tag: 16.2.0-debian-11-r1
