@@ -57,7 +57,14 @@ spec:
       # in place in case the OpenVINO path is ever restored from git history.
       containers:
         - name: frigate
-          image: ghcr.io/blakeblackshear/frigate:stable
+          # Pinned, not :stable. 0.17.2 ships HailoRT 4.21.0, which must match the
+          # hailo_pci host driver (ansible/roles/hailo, hailo_version). :stable has
+          # since moved to 0.18.x, so a floating tag would have pulled a different
+          # release on the rollout restart, bundling a version jump with the
+          # detector swap. Bump this and hailo_version together, after checking
+          # the HailoRT version the new release ships. Renovate does not track
+          # this image (renovate.json only covers intel-gpu-plugin.yaml).
+          image: ghcr.io/blakeblackshear/frigate:0.17.2
           # Hailo-8L device access. Kubernetes has no per-char-device grant, so the
           # container runs privileged to reach /dev/hailo0 (mounted below). The
           # less-privileged alternative is a device plugin that advertises the Hailo
