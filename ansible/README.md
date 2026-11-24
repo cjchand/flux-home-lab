@@ -91,6 +91,23 @@ the dist-upgrade and reboot that site.yml performs through the common role:
 ansible-playbook playbooks/intel-gpu.yml
 ```
 
+### Hailo-8L Host Support
+
+Install the `hailo_pci` driver, firmware and udev rule on the node with the
+Hailo-8L (node-01, group `hailo`). Needs sudo (`-K`) and prompts for a one-time
+MOK password. Like `intel-gpu.yml` it avoids the common role's upgrade and
+reboot, and it never reboots the node itself:
+
+```bash
+ansible-playbook playbooks/hailo.yml -K
+```
+
+With Secure Boot on, the first run builds and signs the driver but cannot load
+it: the signing key must be enrolled once at the node's console (blue MOK
+screen on the next boot; the play prints the steps). Re-run the playbook
+afterwards to load the driver and verify `/dev/hailo0`. Skip `--check`: the
+later tasks depend on earlier ones really running, so a dry run fails partway.
+
 ### Join Node to Cluster
 
 After bootstrap, join the node:
@@ -121,6 +138,21 @@ hardware acceleration from a silent software fallback.
 
 The role also asserts that `i915` is loaded and `/dev/dri/renderD128` exists,
 so it doubles as a precondition check for any GPU workload.
+
+### `hailo`
+
+Host-side support for the Hailo-8L M.2 module: the `hailo_pci` kernel driver
+(built and signed through DKMS, so kernel upgrades rebuild it automatically),
+the device firmware, and the udev rule that creates `/dev/hailo0`.
+
+- Fails early, with BIOS guidance, if no Hailo device (`1e60:`) is on the PCIe
+  bus. The slot's `M.2 WLAN/BT` port is disabled in the BIOS by default.
+- Source and firmware are pinned (`hailo_repo_commit`, `hailo_fw_sha256`) and
+  verified, so a moved upstream tag stops the run.
+- `hailo_version` must match the HailoRT inside the Frigate image
+  (`clusters/dev/apps/frigate/deployment-frigate.yaml`). Bump both together.
+- The HailoRT runtime itself is not installed here; the Frigate container ships
+  its own.
 
 ### microk8s
 

@@ -1,0 +1,16 @@
+[ req ]
+default_bits = 2048
+distinguished_name = req_distinguished_name
+prompt = no
+string_mask = utf8only
+x509_extensions = v3
+
+[ req_distinguished_name ]
+CN = {{ hailo_mok_subject }}
+
+[ v3 ]
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid
+basicConstraints = critical,CA:FALSE
+keyUsage = digitalSignature
+extendedKeyUsage = codeSigning,1.3.6.1.4.1.2312.16.1.2

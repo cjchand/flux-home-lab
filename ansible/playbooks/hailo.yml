@@ -1,0 +1,27 @@
+---
+# Install the host-side Hailo-8L support on node-01: hailo_pci driver (DKMS,
+# signed), firmware and udev rule. Frigate then reaches the card through
+# /dev/hailo0 (see clusters/dev/apps/frigate).
+#
+# Narrow entry point, like intel-gpu.yml: it does NOT run the common role's
+# dist-upgrade and reboot, and it never reboots the node itself.
+#
+# Run (needs sudo, hence -K; the MOK password is prompted unless -e is given):
+#   ansible-playbook playbooks/hailo.yml -K
+#
+# With Secure Boot on, the first run builds and signs the driver but cannot load
+# it: the signing key has to be enrolled once at the node's console (blue MOK
+# screen, next boot). The play prints the exact steps. Afterwards re-run it (or
+# `sudo modprobe hailo_pci`) and it finishes and verifies. Later kernel upgrades
+# rebuild and re-sign the module automatically through DKMS.
+
+- name: Install Hailo-8L host support
+  hosts: hailo
+  become: yes
+  vars_prompt:
+    - name: hailo_mok_password
+      prompt: "One-time MOK enrolment password (8+ chars; typed again at the console; ignored if the key is already enrolled)"
+      private: yes
+      default: ""
+  roles:
+    - hailo
