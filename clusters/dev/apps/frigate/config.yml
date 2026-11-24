@@ -4,58 +4,48 @@ mqtt:
   port: 1883
 
 detectors:
-  # OpenVINO on the Intel HD 630 iGPU. Proven on CPU first (real inference,
-  # zero errors, stable) before flipping to GPU, since the model-path bug
-  # below is in code shared by both device paths.
+  # Hailo-8L (13 TOPS) in the M.2 2230 A+E "WLAN" slot of node-01. Detection moves
+  # off the Intel HD 630 iGPU and onto the Hailo, leaving the iGPU free for VAAPI
+  # decode only (the ffmpeg section below is unchanged) — this also eases the
+  # decode-side ffmpeg crashes seen on the garage/doorbell cameras.
   #
-  # Verified against the actual Frigate 0.17.2 source
-  # (frigate/detectors/plugins/openvino.py and detection_runners.py) after the
-  # first attempt crashed the whole container: the openvino detector has NO
-  # bundled-default code path. model.path is required unconditionally; without
-  # it, OpenVINOModelRunner.__init__ calls os.path.isfile(None) and raises
-  # before the detector process can start — and Frigate does not isolate that
-  # failure to the subprocess, the whole container restarts.
+  # type: hailo8l — the single Frigate detector for BOTH Hailo-8 and Hailo-8L; it
+  # auto-detects the chip via the Hailo CLI and selects the matching default model.
+  # device: PCIe — the module presents as a PCIe endpoint (/dev/hailo0). Access is
+  # granted by the privileged securityContext + hostPath device mount in
+  # deployment-frigate.yaml (K8s has no per-char-device grant short of that or a
+  # device plugin), and scheduling is pinned to node-01 there via nodeSelector
+  # since only that node has the card.
   #
-  # The device is granted by the gpu.intel.com/i915 resource request in
-  # deployment-frigate.yaml, not by a hostPath mount — see
-  # docs/Applications/intel-gpu-plugin.md.
-  ov:
-    type: openvino
-    device: GPU
+  # HOST PREREQUISITE (outside GitOps): the hailo_pci kernel driver must be
+  # installed on the node-01 Ubuntu host and /dev/hailo0 must exist before this
+  # rolls out, or the detector process crash-loops the whole container.
+  hailo:
+    type: hailo8l
+    device: PCIe
 
-# YOLOv9-s at 320x320. Started on yolov9t (what the community runs on comparably
-# weak Gen9.5 iGPUs) out of caution; it ran at 16 ms inference on this HD 630,
-# leaving enough headroom to try the docs' recommended yolov9s for better
-# accuracy. If inference_speed climbs too high or skipped_fps appears, revert
-# to yolov9t (release frigate-model-yolov9t-320-v1, see git history).
-# Same 320 input as before so model size is the only variable.
+# Hailo detection model. No `path` is set: on first start Frigate downloads the
+# architecture-matched default (YOLOv6n, yolov6n.hef) from the Hailo Model Zoo and
+# caches it to /config/model_cache/hailo, after which it runs fully offline. This
+# replaces the OpenVINO ONNX that the init-model container used to fetch; that
+# container has been removed from deployment-frigate.yaml.
 #
-# model_type: yolo-generic — NOT "yolov9". That looks like the obviously-correct
-# value and is invalid in Frigate 0.17: it silently drops the detector into a
-# safe-mode CPU fallback with garbage detections instead of erroring, which is a
-# much worse failure to debug than a crash. Confirmed against
-# frigate/detectors/detector_config.py's ModelTypeEnum directly — yolo-generic
-# is the only valid value for any Ultralytics YOLO export (v8/v9/v11/etc).
+# To pin the model the way the ONNX was pinned (checksummed, reproducible), set
+# `path:` to a specific .hef URL from the Hailo Model Zoo and mirror the release-
+# asset pattern. Left to auto-download here to keep the first cutover simple; if
+# inference_speed or accuracy need tuning, swap in a yolov8s/yolov9 .hef.
 #
-# input_tensor: nchw and input_dtype: float are verified directly from the
-# exported .onnx file's input node (shape [1,3,320,320], FLOAT) — not assumed.
-# input_pixel_format: bgr is not independently verifiable from the ONNX file
-# itself (it describes a preprocessing convention, not something the file
-# encodes); taken from a working real-world OpenVINO+YOLOv9t setup on similarly
-# weak Intel iGPU hardware.
-#
-# The .onnx file itself is NOT committed to the repo — binaries don't belong in
-# git history. It's fetched by an init container in deployment-frigate.yaml from
-# a checksummed GitHub Release asset on this same repo, onto the config PVC, on
-# first pod start only (see that file's comment for the full mechanism).
+# These tensor fields differ from the old OpenVINO values and are the easy ones to
+# miss: input_tensor nchw -> nhwc, input_pixel_format bgr -> rgb, input_dtype
+# float -> int. Values are from Frigate's Hailo detector docs; confirm against the
+# running Frigate version before merge, as with the rest of this config.
 model:
-  path: /config/model_cache/yolov9s-320.onnx
   model_type: yolo-generic
   width: 320
   height: 320
-  input_tensor: nchw
-  input_pixel_format: bgr
-  input_dtype: float
+  input_tensor: nhwc
+  input_pixel_format: rgb
+  input_dtype: int
   labelmap_path: /labelmap/coco-80.txt
 
 ffmpeg:
