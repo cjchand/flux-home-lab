@@ -1,0 +1,41 @@
+---
+# Host-side support for a Hailo-8L M.2 module: the hailo_pci kernel driver
+# (built and signed through DKMS so it survives kernel upgrades), the device
+# firmware, and the udev rule that creates /dev/hailo0.
+#
+# The HailoRT *runtime* is NOT installed here -- Frigate downloads and pins its
+# own copy inside the container. Only the host driver has to match it, so keep
+# hailo_version in step with the HailoRT version the Frigate release expects
+# (a mismatch fails at detector start with HAILO_INVALID_DRIVER_VERSION).
+hailo_version: "4.21.0"
+
+# Hailo vendor ID, used to confirm the card is actually visible on the PCIe bus
+# before anything is built. If this fails the problem is the BIOS (M.2 WLAN/BT
+# port disabled) or seating, not software.
+hailo_pci_vendor: "1e60"
+
+hailo_repo_url: https://github.com/hailo-ai/hailort-drivers.git
+hailo_repo_tag: "v{{ hailo_version }}"
+# Commit the tag resolved to when this role was written (2026-11-24). The play
+# fails if the checkout differs, so a moved or tampered tag is caught.
+hailo_repo_commit: 64897376cd67954ff497e194d6ca76d67f404b26
+hailo_src_dir: "/usr/local/src/hailort-drivers-{{ hailo_version }}"
+
+# Firmware for the Hailo-8 family (the 8L runs the same image).
+hailo_fw_url: "https://hailo-hailort.s3.eu-west-2.amazonaws.com/Hailo8/{{ hailo_version }}/FW/hailo8_fw.{{ hailo_version }}.bin"
+# SHA-256 of the file as downloaded on 2026-11-24. Hailo does not publish a
+# checksum, so this only detects the file changing later. Update it together
+# with hailo_version.
+hailo_fw_sha256: 2a5c94591d9e70d884242e64bf2388b0d2d46b816a335b4c00c3f81a07832635
+hailo_fw_dir: /lib/firmware/hailo
+
+# Module-signing key, used only when Secure Boot is enabled. DKMS signs every
+# build with it; the public half must be enrolled once through the firmware's
+# MOK manager (a console-only step, see tasks/main.yml).
+hailo_mok_key: /var/lib/dkms/mok.key
+hailo_mok_cert: /var/lib/dkms/mok.pub
+hailo_mok_subject: "homelab DKMS module signing"
+
+# One-time password typed at the blue MOK screen. Supplied by the playbook's
+# prompt; never stored. Needed only while the key is not yet enrolled.
+hailo_mok_password: ""

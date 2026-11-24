@@ -1,0 +1,332 @@
+---
+# Order matters here:
+#   1. the card must be on the bus            (else it is a BIOS/seating problem)
+#   2. toolchain + headers that track the kernel
+#   3. signing key, wired into DKMS            (before the build, so it is signed)
+#   4. queue the key for enrolment if Secure Boot is on
+#   5. firmware, THEN the driver               (the firmware must exist before
+#                                               the module first probes the card)
+#   6. load the module and verify, unless the key still has to be enrolled
+
+- name: Look for the Hailo device on the PCIe bus
+  ansible.builtin.command: "lspci -n -d {{ hailo_pci_vendor }}:"
+  register: hailo_lspci
+  changed_when: false
+  check_mode: false
+
+- name: Fail if the Hailo card is not visible
+  ansible.builtin.fail:
+    msg: >-
+      No PCI device with vendor {{ hailo_pci_vendor }} on {{ inventory_hostname }}.
+      Nothing in software will fix this: in the BIOS enable "M.2 WLAN/BT"
+      (Advanced > Port Options), and check the module is seated in the M.2 2230
+      slot.
+  when: hailo_lspci.stdout | trim == ''
+
+- name: Install build prerequisites
+  ansible.builtin.apt:
+    name:
+      - build-essential
+      - dkms
+      # The meta-package, not just the running kernel's headers: it pulls in
+      # headers for each new kernel, which is what lets DKMS rebuild the
+      # module during an upgrade.
+      - linux-headers-generic
+      - git
+      - mokutil
+      - openssl
+    state: present
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Read Secure Boot state
+  ansible.builtin.command: mokutil --sb-state
+  register: hailo_sb_state
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Record whether Secure Boot is enforcing
+  ansible.builtin.set_fact:
+    hailo_secure_boot: "{{ 'SecureBoot enabled' in hailo_sb_state.stdout }}"
+
+# --- Signing key -------------------------------------------------------------
+# Generated even when Secure Boot is off, so turning it on later needs only the
+# enrolment step. 100-year validity: the kernel does not check expiry on module
+# signatures, and an expired cert would only be a trap.
+
+- name: Create the DKMS key directory
+  ansible.builtin.file:
+    path: "{{ hailo_mok_key | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Install the OpenSSL config for the signing key
+  ansible.builtin.template:
+    src: mok-openssl.cnf.j2
+    dest: /etc/dkms/hailo-mok-openssl.cnf
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Generate the module-signing key pair
+  # umask 077 so the private key is created root-only, never briefly readable.
+  ansible.builtin.shell: >-
+    umask 077 &&
+    openssl req -new -x509 -nodes -days 36500 -newkey rsa:2048
+    -config /etc/dkms/hailo-mok-openssl.cnf
+    -keyout {{ hailo_mok_key }}
+    -outform DER -out {{ hailo_mok_cert }}
+  args:
+    creates: "{{ hailo_mok_cert }}"
+
+- name: Restrict the private key to root
+  # Belt and braces after the umask above. Skipped in a dry run, where the key
+  # has not been generated yet and the file module would fail on a missing path.
+  ansible.builtin.file:
+    path: "{{ hailo_mok_key }}"
+    owner: root
+    group: root
+    mode: "0600"
+  when: not ansible_check_mode
+
+- name: Create the DKMS framework config directory
+  ansible.builtin.file:
+    path: /etc/dkms/framework.conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Point DKMS at the signing key
+  ansible.builtin.copy:
+    dest: /etc/dkms/framework.conf.d/hailo-signing.conf
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      # Managed by Ansible (roles/hailo)
+      mok_signing_key="{{ hailo_mok_key }}"
+      mok_certificate="{{ hailo_mok_cert }}"
+
+# --- Key enrolment (only matters under Secure Boot) --------------------------
+
+- name: Check whether the signing key is already enrolled
+  ansible.builtin.command: "mokutil --test-key {{ hailo_mok_cert }}"
+  register: hailo_mok_test
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  when: hailo_secure_boot
+
+- name: List enrolments already queued for the next boot
+  ansible.builtin.command: mokutil --list-new
+  register: hailo_mok_pending
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  when: hailo_secure_boot
+
+# mokutil's exit codes for --test-key are not something to lean on, so decide
+# from its message: "... is already enrolled" vs "... is not enrolled" vs
+# "... is already in the enrollment request".
+- name: Work out whether the key still needs enrolling
+  ansible.builtin.set_fact:
+    hailo_needs_enrollment: >-
+      {{ (hailo_secure_boot
+          and ('already enrolled' not in hailo_mok_test.stdout)) | bool }}
+    hailo_enrollment_queued: >-
+      {{ (hailo_secure_boot
+          and (('enrollment request' in hailo_mok_test.stdout)
+               or (hailo_mok_subject in hailo_mok_pending.stdout))) | bool }}
+
+- name: Fail early if enrolment is needed but no password was given
+  ansible.builtin.fail:
+    msg: >-
+      Secure Boot is on and the signing key is not enrolled, so a one-time MOK
+      password is required (hailo_mok_password). Run via playbooks/hailo.yml,
+      which prompts for it, or pass -e hailo_mok_password=...
+  when:
+    - hailo_needs_enrollment
+    - not hailo_enrollment_queued
+    - hailo_mok_password | length < 8
+    - not ansible_check_mode
+
+# mokutil is given a crypt(3) hash of the password via --hash-file rather than
+# the password on stdin, so it never needs a terminal. The hash file is removed
+# whether or not the import succeeds.
+- name: Queue the signing key for enrolment at the next boot
+  when:
+    - hailo_needs_enrollment
+    - not hailo_enrollment_queued
+    - not ansible_check_mode
+  block:
+    - name: Hash the one-time MOK password
+      ansible.builtin.command: openssl passwd -6 -stdin
+      args:
+        stdin: "{{ hailo_mok_password }}"
+      register: hailo_mok_hash
+      no_log: true
+      changed_when: false
+
+    - name: Write the hash where mokutil can read it
+      ansible.builtin.copy:
+        content: "{{ hailo_mok_hash.stdout }}\n"
+        dest: /root/.hailo-mok-hash
+        owner: root
+        group: root
+        mode: "0600"
+      no_log: true
+
+    - name: Import the key
+      ansible.builtin.command: >-
+        mokutil --import {{ hailo_mok_cert }} --hash-file /root/.hailo-mok-hash
+      changed_when: true
+  always:
+    - name: Remove the password hash file
+      ansible.builtin.file:
+        path: /root/.hailo-mok-hash
+        state: absent
+
+# --- Firmware, then driver ---------------------------------------------------
+
+- name: Create the Hailo firmware directory
+  ansible.builtin.file:
+    path: "{{ hailo_fw_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Install the Hailo-8 firmware
+  ansible.builtin.get_url:
+    url: "{{ hailo_fw_url }}"
+    dest: "{{ hailo_fw_dir }}/hailo8_fw.bin"
+    checksum: "sha256:{{ hailo_fw_sha256 }}"
+    owner: root
+    group: root
+    mode: "0644"
+  # A dry run does not create the firmware directory above, so there is nowhere
+  # to download to.
+  when: not ansible_check_mode
+
+- name: Fetch the pinned driver source
+  ansible.builtin.git:
+    repo: "{{ hailo_repo_url }}"
+    dest: "{{ hailo_src_dir }}"
+    version: "{{ hailo_repo_tag }}"
+    depth: 1
+  register: hailo_git
+
+- name: Check the checkout is the commit we pinned
+  when: not ansible_check_mode
+  ansible.builtin.assert:
+    that: hailo_git.after == hailo_repo_commit
+    fail_msg: >-
+      {{ hailo_repo_tag }} resolved to {{ hailo_git.after }}, expected
+      {{ hailo_repo_commit }}. The upstream tag has moved; review before
+      updating hailo_repo_commit.
+
+- name: Read the current DKMS registration
+  ansible.builtin.command: dkms status hailo_pci
+  register: hailo_dkms_status
+  changed_when: false
+  check_mode: false
+  # In a dry run apt has not really installed dkms, so the binary is missing.
+  # On a real run dkms is installed above and any failure here is genuine.
+  failed_when: hailo_dkms_status.rc != 0 and not ansible_check_mode
+
+- name: Build, sign and install the driver through DKMS
+  # The repo's own install_dkms target: removes any older hailo_pci DKMS entry,
+  # copies the sources to /usr/src, then dkms add / build / install. DKMS signs
+  # with the key configured above. Skipped when this version is already
+  # installed, so re-running the playbook changes nothing.
+  ansible.builtin.command: make install_dkms
+  args:
+    chdir: "{{ hailo_src_dir }}/linux/pcie"
+  when: >-
+    hailo_dkms_status.stdout is not
+    search('hailo_pci/' ~ (hailo_version | regex_escape) ~ '.*: installed')
+  register: hailo_dkms_install
+
+- name: Install the udev rule that creates /dev/hailo0
+  ansible.builtin.copy:
+    src: "{{ hailo_src_dir }}/linux/pcie/51-hailo-udev.rules"
+    dest: /etc/udev/rules.d/51-hailo-udev.rules
+    remote_src: yes
+    owner: root
+    group: root
+    mode: "0644"
+  register: hailo_udev
+  when: not ansible_check_mode
+
+- name: Reload udev rules
+  ansible.builtin.command: udevadm control --reload-rules
+  when:
+    - not ansible_check_mode
+    - hailo_udev.changed
+
+# --- Load and verify ---------------------------------------------------------
+
+- name: Load the driver
+  community.general.modprobe:
+    name: hailo_pci
+    state: present
+  when:
+    - not hailo_needs_enrollment
+    - not ansible_check_mode
+
+- name: Re-trigger udev so the device node is created
+  ansible.builtin.command: udevadm trigger
+  changed_when: false
+  when:
+    - not hailo_needs_enrollment
+    - not ansible_check_mode
+
+- name: Wait for /dev/hailo0
+  ansible.builtin.stat:
+    path: /dev/hailo0
+  register: hailo_dev
+  until: hailo_dev.stat.exists
+  retries: 10
+  delay: 3
+  when:
+    - not hailo_needs_enrollment
+    - not ansible_check_mode
+
+- name: Read the loaded driver version
+  ansible.builtin.slurp:
+    src: /sys/module/hailo_pci/version
+  register: hailo_loaded_version
+  when:
+    - not hailo_needs_enrollment
+    - not ansible_check_mode
+
+- name: Check the loaded driver is the version we pinned
+  ansible.builtin.assert:
+    that: (hailo_loaded_version.content | b64decode | trim) == hailo_version
+    fail_msg: >-
+      hailo_pci reports {{ hailo_loaded_version.content | b64decode | trim }},
+      expected {{ hailo_version }}. An older copy of the module is loaded or
+      shadowing the DKMS one.
+  when:
+    - not hailo_needs_enrollment
+    - not ansible_check_mode
+
+- name: Next step, key enrolment needed
+  ansible.builtin.debug:
+    msg:
+      - "The driver is built and signed, but the kernel will not load it until the key is enrolled."
+      - "At the console of {{ inventory_hostname }}: reboot, and at the blue MOK screen choose"
+      - "  Enroll MOK -> Continue -> Yes -> type the one-time password -> Reboot."
+      - "Then re-run this playbook (or just: sudo modprobe hailo_pci) and /dev/hailo0 will appear."
+  when: hailo_needs_enrollment
+
+- name: Done
+  ansible.builtin.debug:
+    msg: "hailo_pci {{ hailo_version }} loaded and /dev/hailo0 present on {{ inventory_hostname }}."
+  when:
+    - not hailo_needs_enrollment
+    - not ansible_check_mode

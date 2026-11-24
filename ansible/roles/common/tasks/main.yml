@@ -29,5 +29,7 @@
 - name: Reboot if required
   ansible.builtin.reboot:
     msg: "Rebooting due to pending updates"
-    reboot_timeout: 300
+    # These EliteDesks take 6-7 minutes from shutdown to SSH (boot itself is
+    # ~25 s; the rest is firmware POST), so 300 s always timed out.
+    reboot_timeout: 900
   when: reboot_required.stat.exists
