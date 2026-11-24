@@ -44,7 +44,7 @@
     - name: Reboot if required
       ansible.builtin.reboot:
         msg: "Rebooting due to OS updates"
-        reboot_timeout: 300
+        reboot_timeout: 900
       when: reboot_required.stat.exists
 
     - name: Wait for microk8s to be ready after reboot
