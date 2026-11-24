@@ -1,0 +1,49 @@
+---
+# Replacement for the Bitnami tandoor-postgresql subchart (bitnamilegacy image).
+# On first creation it imports the tandoor database from the old server
+# (externalClusters below); after that the bootstrap section is ignored. The
+# Bitnami DB stays up, untouched, as the rollback until it is retired by hand.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: tandoor-pg
+  namespace: tandoor
+spec:
+  instances: 1
+  # The standard images carry en_US.UTF-8, which the source database uses.
+  imageName: ghcr.io/cloudnative-pg/postgresql:17.12-standard-bookworm
+  storage:
+    size: 8Gi
+    storageClass: nfs-client
+  enableSuperuserAccess: true
+  superuserSecret:
+    name: tandoor-pg-superuser
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  bootstrap:
+    initdb:
+      database: tandoor
+      owner: tandoor
+      secret:
+        name: tandoor-pg-app
+      encoding: UTF8
+      localeCollate: en_US.UTF-8
+      localeCType: en_US.UTF-8
+      import:
+        type: microservice
+        databases:
+          - tandoor
+        source:
+          externalCluster: bitnami-tandoor
+  externalClusters:
+    - name: bitnami-tandoor
+      connectionParameters:
+        host: tandoor-postgresql.tandoor.svc.cluster.local
+        user: postgres
+        dbname: tandoor
+        sslmode: disable
+      password:
+        name: tandoor-postgresql
+        key: postgres-password
