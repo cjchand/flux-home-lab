@@ -3,3 +3,5 @@ clusters/dev/apps/frigate/secret-frigate.yaml
 
 # Subagent-driven-development scratch (ledger, briefs, review packages)
 .superpowers/
+
+__pycache__/
