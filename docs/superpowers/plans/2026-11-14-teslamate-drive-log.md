@@ -14,7 +14,7 @@
 
 - Python **3.12**; dependencies limited to: fastapi, uvicorn, jinja2, psycopg[binary] (v3), astral, pytest (dev). No SPA framework, no ORM.
 - The app **only writes to the `drivelog` schema**; all access to Teslamate's `public` tables is **read-only** (SELECT).
-- DB connection uses the existing **`teslamate-postgres`** secret, key **`teslamate_user_pass`**, username **`teslamate`**, database **`teslamate`**, host **`teslamate-postgres-nfs-postgresql`**, port **5432** (verified: this user has CREATE on the DB).
+- DB connection uses the existing **`teslamate-postgres`** secret, key **`teslamate_user_pass`**, username **`teslamate`**, database **`teslamate`**, host **`teslamate-pg-rw`**, port **5432** (verified: this user has CREATE on the DB).
 - Teslamate timestamps are **naive UTC**; treat as UTC, display/aggregate in **`America/Chicago`** (configurable via `DRIVELOG_TZ`).
 - Texas night = **sunset + 30 min → sunrise − 30 min**, computed per drive via sunrise/sunset at the drive's start location.
 - Daily cap = **60 counted minutes per local calendar day**, filled **night-minutes-first** then day; the 10 h night sub-total is computed from the **capped** minutes.
@@ -162,7 +162,7 @@
 - Create: `clusters/dev/apps/drivelog/kustomization.yaml`
 - Modify: `clusters/dev/apps/kustomization.yaml` (add `- drivelog/`)
 
-**Interfaces:** Deployment in `teslamate` ns, image `ghcr.io/cjchand/drivelog:latest` (`imagePullPolicy: Always`), env from the `teslamate-postgres` secret (`teslamate_user_pass`) plus plain env (`DRIVELOG_DB_HOST=teslamate-postgres-nfs-postgresql`, `DRIVELOG_DB_USER=teslamate`, `DRIVELOG_DB_NAME=teslamate`, `DRIVELOG_TZ=America/Chicago`, `DRIVELOG_STUDENT_NAME=Toby`, `DRIVELOG_HOME_LAT/LON`), readiness/liveness on `/healthz`, modest resources (start from `dns-report`'s values). Service :8080. Ingress host `drivelog.internal`, Traefik websecure, `internal-ca`, TLS secret `drivelog-tls`, homepage annotations (group "Lifestyle", icon teslamate/car).
+**Interfaces:** Deployment in `teslamate` ns, image `ghcr.io/cjchand/drivelog:latest` (`imagePullPolicy: Always`), env from the `teslamate-postgres` secret (`teslamate_user_pass`) plus plain env (`DRIVELOG_DB_HOST=teslamate-pg-rw`, `DRIVELOG_DB_USER=teslamate`, `DRIVELOG_DB_NAME=teslamate`, `DRIVELOG_TZ=America/Chicago`, `DRIVELOG_STUDENT_NAME=Toby`, `DRIVELOG_HOME_LAT/LON`), readiness/liveness on `/healthz`, modest resources (start from `dns-report`'s values). Service :8080. Ingress host `drivelog.internal`, Traefik websecure, `internal-ca`, TLS secret `drivelog-tls`, homepage annotations (group "Lifestyle", icon teslamate/car).
 
 - [ ] **Step 1:** Write all four manifests + add to apps kustomization. Do NOT create a namespace (teslamate exists).
 - [ ] **Step 2: Validate** — `kubectl kustomize clusters/dev/apps/drivelog` renders cleanly; `kubectl apply --dry-run=server -k clusters/dev/apps/drivelog` (or client dry-run) passes.
